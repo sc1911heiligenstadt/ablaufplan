@@ -97,9 +97,21 @@ async function fetchMe() {
   return gatewayRequest({ action: "me", app: GATEWAY_APP_ID });
 }
 
-// Mannschaftsnamen für die Ankreuzliste UND die Trainer dahinter. Beides kommt
-// aus den Trainerprofilen, damit kein zweiter Bestand entsteht, der mit der Zeit
-// auseinanderläuft.
+// Mannschaftsnamen für die Ankreuzliste UND die Trainer dahinter.
+//
+// ⚠️ Seit 2026-08-12 ist die ZENTRALE MANNSCHAFTSLISTE die Quelle
+// (`mannschaften-load` im Gateway), nicht mehr die frei getippten Felder in den
+// Trainerprofilen. Genau daher kam das Durcheinander in der Ankreuzliste: dort
+// standen „B1", „B-Junioren", „B-Junioren 2 (K)" und „Zeugwart" nebeneinander,
+// weil jeder Trainer seine eigene Schreibweise hinterlegt hatte.
+//
+// Die Liste liefert die Trainer gleich mit — ein Aufruf statt zweier, und die
+// Namen kommen aus der Zuordnung an der Mannschaft statt aus einem Textvergleich.
+//
+// ⚠️ RÜCKFALL auf den alten Weg, solange die Liste leer ist: sie wird erst
+// aufgebaut, und bis dahin darf die Ankreuzliste nicht leer sein. Der Rückfall
+// verschwindet von selbst, sobald die erste Mannschaft angelegt ist — er wird
+// bewusst NICHT gemischt, sonst stünde das alte Durcheinander wieder daneben.
 //
 // ⚠️ Die Trainernamen bleiben im angemeldeten Bereich. Sie werden weder in
 // `ablaufplan.json` gespeichert noch über den Link ohne Anmeldung ausgeliefert —
@@ -111,29 +123,59 @@ async function fetchMe() {
 // freie Feld und der Text-Übernehmer funktionieren trotzdem.
 async function fetchMannschaftsInfo() {
   try {
-    const body = await gatewayRequest({ action: "list-trainer-profiles" });
-    const namen = new Map();   // normalisiert -> Anzeigename
-    const trainer = new Map(); // normalisiert -> [{name, username}]
-    ((body && body.profiles) || []).forEach((p) => {
-      const anzeige = [p.vorname, p.nachname].filter(Boolean).join(" ").trim() || String(p.username || "");
-      (p.mannschaften || []).forEach((m) => {
-        const roh = String(m || "").trim();
-        const k = normMannschaft(roh);
-        if (!roh || !k) return;
-        if (!namen.has(k)) namen.set(k, roh);
-        if (!trainer.has(k)) trainer.set(k, []);
-        if (anzeige) trainer.get(k).push({ name: anzeige, username: String(p.username || "") });
+    const body = await gatewayRequest({ action: "mannschaften-load" });
+    const teams = (body && Array.isArray(body.teams)) ? body.teams : [];
+    // Archivierte sind aufgelöste Mannschaften: alte Abläufe zeigen sie weiter
+    // an, aber für einen NEUEN Punkt soll sie niemand mehr ankreuzen können.
+    const aktiv = teams.filter((t) => t && t.kurz && !t.archiviert);
+    if (aktiv.length) {
+      const trainer = new Map();
+      aktiv.forEach((t) => {
+        const k = normMannschaft(t.kurz);
+        if (!k) return;
+        trainer.set(k, (t.trainer || [])
+          .map((p) => ({ name: String(p.name || p.username || ""), username: String(p.username || "") }))
+          .filter((p) => p.name)
+          .sort((a, b) => a.name.localeCompare(b.name, "de")));
       });
-    });
-    trainer.forEach((liste) => liste.sort((a, b) => a.name.localeCompare(b.name, "de")));
-    return {
-      namen: Array.from(namen.values()).sort((a, b) => a.localeCompare(b, "de", { numeric: true })),
-      trainer
-    };
+      // Reihenfolge kommt aus dem Gateway (Herren, dann A bis G, dann Nummer)
+      // und wird hier bewusst NICHT neu sortiert — alphabetisch stünde E1 vor D1.
+      return { namen: aktiv.map((t) => t.kurz), trainer, ausListe: true };
+    }
+    return await fetchMannschaftsInfoAusProfilen();
   } catch (e) {
     console.warn("Mannschaftsliste nicht ladbar", e);
-    return { namen: [], trainer: new Map() };
+    try {
+      return await fetchMannschaftsInfoAusProfilen();
+    } catch (_) {
+      return { namen: [], trainer: new Map(), ausListe: false };
+    }
   }
+}
+
+// Der Weg von vor dem 2026-08-12. Bleibt als Rückfallebene, bis die zentrale
+// Liste befüllt ist; danach läuft er nie wieder an.
+async function fetchMannschaftsInfoAusProfilen() {
+  const body = await gatewayRequest({ action: "list-trainer-profiles" });
+  const namen = new Map();   // normalisiert -> Anzeigename
+  const trainer = new Map(); // normalisiert -> [{name, username}]
+  ((body && body.profiles) || []).forEach((p) => {
+    const anzeige = [p.vorname, p.nachname].filter(Boolean).join(" ").trim() || String(p.username || "");
+    (p.mannschaften || []).forEach((m) => {
+      const roh = String(m || "").trim();
+      const k = normMannschaft(roh);
+      if (!roh || !k) return;
+      if (!namen.has(k)) namen.set(k, roh);
+      if (!trainer.has(k)) trainer.set(k, []);
+      if (anzeige) trainer.get(k).push({ name: anzeige, username: String(p.username || "") });
+    });
+  });
+  trainer.forEach((liste) => liste.sort((a, b) => a.name.localeCompare(b.name, "de")));
+  return {
+    namen: Array.from(namen.values()).sort((a, b) => a.localeCompare(b, "de", { numeric: true })),
+    trainer,
+    ausListe: false
+  };
 }
 
 // ---------- Anhänge ----------

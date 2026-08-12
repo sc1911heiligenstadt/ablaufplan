@@ -339,3 +339,18 @@ body.printing-report #print-area { display: block; padding: 20px; }
 @media (max-width: 820px) {
   input, select, textarea { font-size: 16px !important; }
 }
+
+/* Altbestand in der Mannschafts-Ankreuzliste (seit 2026-08-12).
+   Namen aus der Zeit vor der zentralen Mannschaftsliste. Sie erscheinen nur
+   noch, wenn sie an DIESEM Punkt bereits angehakt sind -- so verliert ein alter
+   Punkt beim Bearbeiten seine Angabe nicht, neu vergeben kann sie aber niemand
+   mehr. Nach dem Umschreib-Lauf verschwinden sie von selbst. */
+.checkbox-row.alt-mannschaft > span { color: var(--muted, #6b7280); }
+.alt-hinweis {
+  font-size: 11px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 4px;
+  white-space: nowrap;
+}

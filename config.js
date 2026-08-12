@@ -20,6 +20,21 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.2",
+    groups: [
+      {
+        title: "Die Mannschaftsliste ist aufgeräumt",
+        items: [
+          "In der Ankreuzliste stand bisher alles durcheinander, was Trainer irgendwann in ihr Profil getippt hatten — „B1“ neben „B-Junioren“ neben „B-Junioren 2 (K)“, dazu Sachen wie „Zeugwart“ oder „U6-U11“, die gar keine Mannschaft sind.",
+          "Jetzt kommen die Mannschaften aus einer einzigen Liste, die in der Tools-Übersicht unter Einstellungen → Mannschaften gepflegt wird. Jede Mannschaft steht dort genau einmal.",
+          "Die Reihenfolge ist die sinnvolle: Herren zuerst, dann A- bis G-Junioren, dann die Nummer. Nicht mehr alphabetisch, wo E1 vor D1 stand.",
+          "Die Trainernamen unter den Punkten kommen jetzt aus derselben Liste — dort ist hinterlegt, wer welche Mannschaft betreut, samt Rolle.",
+          "Alte Schreibweisen in bereits erfassten Punkten bleiben stehen und sind als „alte Schreibweise“ gekennzeichnet. Bei einem neuen Punkt lassen sie sich nicht mehr auswählen."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.1",
     groups: [
       {

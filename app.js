@@ -8,8 +8,13 @@
 
 let appData = { meta: {}, ablaeufe: [] };
 let currentUser = null;
-let mannschaftsNamen = [];              // aus den Trainerprofilen
+let mannschaftsNamen = [];              // aus der zentralen Mannschaftsliste (Rückfall: Trainerprofile)
 let trainerJeMannschaft = new Map();    // normalisierter Name -> [{name, username}]
+// Kommt die Liste aus der zentralen Mannschaftsverwaltung? Dann sind Namen in
+// alten Punkten, die dort NICHT stehen, Altbestand aus der Freitext-Zeit — sie
+// bleiben wählbar, damit ein bestehender Punkt beim Bearbeiten seine Angabe
+// nicht verliert, werden aber als solche gekennzeichnet.
+let mannschaftsAusListe = false;
 let offenerAblaufId = null;
 let punktModalId = null;        // null = neuer Punkt
 let verschiebeAbId = null;
@@ -190,7 +195,27 @@ function alleMannschaftsNamen() {
     const k = normMannschaft(n);
     if (k && !gesehen.has(k)) gesehen.set(k, n);
   })));
-  return Array.from(gesehen.values()).sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
+  const alle = Array.from(gesehen.values());
+  // ⚠️ Kommt die Liste aus der zentralen Verwaltung, bleibt IHRE Reihenfolge
+  // stehen (Herren, dann A bis G, dann Nummer). Alphabetisch stünde E1 vor D1,
+  // und genau die unlesbare Kästchenliste war der Anlass für den ganzen Umbau.
+  // Der Altbestand hängt hinten dran.
+  if (mannschaftsAusListe) {
+    const inListe = new Set(mannschaftsNamen.map(normMannschaft));
+    return mannschaftsNamen.concat(
+      alle.filter((n) => !inListe.has(normMannschaft(n)))
+          .sort((a, b) => a.localeCompare(b, "de", { numeric: true }))
+    );
+  }
+  return alle.sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
+}
+
+// Steht dieser Name NICHT in der zentralen Liste? Dann stammt er aus der Zeit
+// vor dem 2026-08-12 und verschwindet mit dem Umschreib-Lauf.
+function istAltmannschaft(name) {
+  if (!mannschaftsAusListe) return false;
+  const k = normMannschaft(name);
+  return !mannschaftsNamen.some((n) => normMannschaft(n) === k);
 }
 
 function nurMeineAktiv() { return lsLesen(LS_NUR_MEINE, "0") === "1"; }
@@ -507,13 +532,22 @@ async function ablaufKopieren(id) {
 // ---------- Punkt-Formular ----------
 
 function renderMannschaftsAuswahl(gewaehlt) {
-  const namen = alleMannschaftsNamen();
-  const ziel = document.getElementById("pf-mannschaften");
+  const alle = alleMannschaftsNamen();
   const gewaehltNorm = (gewaehlt || []).map(normMannschaft);
-  ziel.innerHTML = namen.map((n) => `<label class="checkbox-row">
+  // Altbestand nur zeigen, wenn er an DIESEM Punkt schon angehakt ist. Sonst
+  // stünde das alte Durcheinander weiter in der Liste und man könnte es neu
+  // vergeben — der Umbau wäre wirkungslos. Ein bestehender Punkt verliert seine
+  // Angabe aber nicht, nur weil sie noch nicht umgeschrieben ist.
+  const namen = alle.filter((n) =>
+    !istAltmannschaft(n) || gewaehltNorm.indexOf(normMannschaft(n)) >= 0);
+  const ziel = document.getElementById("pf-mannschaften");
+  ziel.innerHTML = namen.map((n) => {
+    const alt = istAltmannschaft(n);
+    return `<label class="checkbox-row${alt ? " alt-mannschaft" : ""}">
     <input type="checkbox" value="${escapeHtml(n)}"${gewaehltNorm.indexOf(normMannschaft(n)) >= 0 ? " checked" : ""} />
-    <span>${escapeHtml(n)}</span>
-  </label>`).join("");
+    <span>${escapeHtml(n)}${alt ? ' <span class="alt-hinweis">alte Schreibweise</span>' : ""}</span>
+  </label>`;
+  }).join("");
   document.getElementById("pf-mannschaften-leer").classList.toggle("hidden", namen.length > 0);
 }
 
@@ -1098,6 +1132,7 @@ async function init() {
   const info = await fetchMannschaftsInfo();
   mannschaftsNamen = info.namen;
   trainerJeMannschaft = info.trainer;
+  mannschaftsAusListe = !!info.ausListe;
   renderAlles();
 }
 
