@@ -20,6 +20,28 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.1",
+    groups: [
+      {
+        title: "Die Trainer stehen jetzt an den Punkten",
+        items: [
+          "Unter den Mannschaften eines Punktes stehen die Namen der Trainer, die diese Mannschaft in ihrem Profil führen.",
+          "Betreut jemand zwei der beteiligten Mannschaften, steht der Name trotzdem nur einmal da.",
+          "Die Namen kommen aus den Trainerdaten und werden hier nicht gespeichert. Über den Link ohne Anmeldung sind sie nicht sichtbar."
+        ]
+      },
+      {
+        title: "Erinnerung eine Viertelstunde vorher",
+        items: [
+          "Wer eine der beteiligten Mannschaften im Profil hat, bekommt 15 Minuten vor seinem Punkt eine Nachricht aufs Handy — mit Uhrzeit, Mannschaft, was ansteht und dem Ort.",
+          "Die Nachricht geht nur an Vereinskonten mit angemeldetem Gerät. Ein- und ausschalten lässt sie sich in der Tools-Übersicht unter „Mein Konto“.",
+          "Ein Punkt wird höchstens einmal gemeldet. Wird er verschoben, kommt zur neuen Zeit eine neue Erinnerung.",
+          "Punkte ohne Mannschaft (etwa „Fotograf“) lösen nichts aus — dahinter steht kein Konto."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0",
     groups: [
       {

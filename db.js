@@ -97,21 +97,42 @@ async function fetchMe() {
   return gatewayRequest({ action: "me", app: GATEWAY_APP_ID });
 }
 
-// Mannschaftsnamen für die Ankreuzliste. Kommen aus den Trainerprofilen, damit
-// kein zweiter Bestand entsteht, der mit der Zeit auseinanderläuft.
+// Mannschaftsnamen für die Ankreuzliste UND die Trainer dahinter. Beides kommt
+// aus den Trainerprofilen, damit kein zweiter Bestand entsteht, der mit der Zeit
+// auseinanderläuft.
+//
+// ⚠️ Die Trainernamen bleiben im angemeldeten Bereich. Sie werden weder in
+// `ablaufplan.json` gespeichert noch über den Link ohne Anmeldung ausgeliefert —
+// der Worker kennt sie in `ablaufplan-oeffentlich` gar nicht, weil sie nie in
+// den Datensatz wandern. Wer das ändert, ändert den Datenschutz-Absatz auf
+// `plan.html` mit.
+//
 // ⚠️ Wirft nicht nach oben durch: ohne Liste bleibt die Ankreuzliste leer, das
 // freie Feld und der Text-Übernehmer funktionieren trotzdem.
-async function fetchMannschaftsNamen() {
+async function fetchMannschaftsInfo() {
   try {
     const body = await gatewayRequest({ action: "list-trainer-profiles" });
-    const namen = new Set();
+    const namen = new Map();   // normalisiert -> Anzeigename
+    const trainer = new Map(); // normalisiert -> [{name, username}]
     ((body && body.profiles) || []).forEach((p) => {
-      (p.mannschaften || []).forEach((m) => { const t = String(m || "").trim(); if (t) namen.add(t); });
+      const anzeige = [p.vorname, p.nachname].filter(Boolean).join(" ").trim() || String(p.username || "");
+      (p.mannschaften || []).forEach((m) => {
+        const roh = String(m || "").trim();
+        const k = normMannschaft(roh);
+        if (!roh || !k) return;
+        if (!namen.has(k)) namen.set(k, roh);
+        if (!trainer.has(k)) trainer.set(k, []);
+        if (anzeige) trainer.get(k).push({ name: anzeige, username: String(p.username || "") });
+      });
     });
-    return Array.from(namen).sort((a, b) => a.localeCompare(b, "de"));
+    trainer.forEach((liste) => liste.sort((a, b) => a.name.localeCompare(b.name, "de")));
+    return {
+      namen: Array.from(namen.values()).sort((a, b) => a.localeCompare(b, "de", { numeric: true })),
+      trainer
+    };
   } catch (e) {
     console.warn("Mannschaftsliste nicht ladbar", e);
-    return [];
+    return { namen: [], trainer: new Map() };
   }
 }
 

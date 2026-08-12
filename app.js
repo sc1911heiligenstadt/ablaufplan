@@ -8,7 +8,8 @@
 
 let appData = { meta: {}, ablaeufe: [] };
 let currentUser = null;
-let mannschaftsNamen = [];      // aus den Trainerprofilen
+let mannschaftsNamen = [];              // aus den Trainerprofilen
+let trainerJeMannschaft = new Map();    // normalisierter Name -> [{name, username}]
 let offenerAblaufId = null;
 let punktModalId = null;        // null = neuer Punkt
 let verschiebeAbId = null;
@@ -256,9 +257,25 @@ function renderDetailKopf(a) {
   if (b2) b2.addEventListener("click", () => ablaufKopieren(a.id));
 }
 
+// Die Trainer der Mannschaften eines Punktes, ohne Doppelnennung. Betreut
+// jemand B1 UND B2, steht der Name bei einem gemeinsamen Punkt trotzdem nur
+// einmal da.
+function trainerZuPunkt(p) {
+  const gesehen = new Set();
+  const namen = [];
+  (p.mannschaften || []).forEach((m) => {
+    (trainerJeMannschaft.get(normMannschaft(m)) || []).forEach((t) => {
+      const k = t.username || t.name;
+      if (k && !gesehen.has(k)) { gesehen.add(k); namen.push(t.name); }
+    });
+  });
+  return namen;
+}
+
 function punktKarteHtml(p, zustand) {
   const teams = p.mannschaften.map((m) => `<span class="chip">${escapeHtml(m)}</span>`).join("");
   const wer = p.werFrei ? `<span class="chip chip-frei">${escapeHtml(p.werFrei)}</span>` : "";
+  const trainer = trainerZuPunkt(p);
   const titel = p.was || p.mannschaften.join(" / ") || "Ohne Bezeichnung";
   const bis = p.endZeit ? `<span class="pz-bis">bis ${escapeHtml(p.endZeit)}</span>` : "";
   return `<div class="punkt-zeile ${zustand.klassen}" data-punkt="${escapeHtml(p.id)}">
@@ -273,6 +290,7 @@ function punktKarteHtml(p, zustand) {
         ${zustand.meiner ? '<span class="chip chip-meine">du</span>' : ""}
       </div>
       ${teams || wer ? `<div class="pz-wer">${teams}${wer}</div>` : ""}
+      ${trainer.length ? `<div class="pz-trainer">👤 ${escapeHtml(trainer.join(", "))}</div>` : ""}
       ${p.ort ? `<div class="pz-ort">📍 ${escapeHtml(p.ort)}</div>` : ""}
       ${p.notiz ? `<div class="pz-notiz">${escapeHtml(p.notiz).replace(/\n/g, "<br>")}</div>` : ""}
       <div class="pz-aktionen editor-only${canEdit() ? "" : " hidden"}">
@@ -1075,9 +1093,11 @@ async function init() {
   renderAlles();
   renderInfo();
 
-  // Die Mannschaftsliste kommt nach — die App ist ohne sie schon bedienbar,
+  // Mannschaften und Trainer kommen nach — die App ist ohne sie schon bedienbar,
   // und ein zweiter Roundtrip soll den ersten Aufbau nicht aufhalten.
-  mannschaftsNamen = await fetchMannschaftsNamen();
+  const info = await fetchMannschaftsInfo();
+  mannschaftsNamen = info.namen;
+  trainerJeMannschaft = info.trainer;
   renderAlles();
 }
 

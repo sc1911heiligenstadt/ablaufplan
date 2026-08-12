@@ -200,6 +200,9 @@ button.btn:disabled { opacity: 0.45; cursor: default; }
 .pz-kopf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pz-was { font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
 .pz-wer { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+/* Trainernamen. Nur im angemeldeten Bereich — plan.js rendert sie nicht, und
+   der Worker liefert sie über den offenen Link gar nicht erst mit. */
+.pz-trainer { font-size: 13px; color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
 .pz-ort { font-size: 13px; color: var(--muted); margin-top: 6px; }
 .pz-notiz { font-size: 13px; margin-top: 6px; background: var(--gold-light); padding: 6px 9px; border-radius: 6px; line-height: 1.4; }
 .pz-aktionen { display: flex; gap: 14px; margin-top: 10px; }
