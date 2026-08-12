@@ -1,0 +1,338 @@
+:root {
+  --green: #2d8c4e;
+  --red: #c0392b;
+  --red-light: #fdecea;
+  --blue: #1a56a0;
+  --blue-light: #e8f0fb;
+  --gold: #c9941f;
+  --gold-light: #fbf2e1;
+  --gray: #f4f5f7;
+  --border: #dde1e8;
+  --text: #1e2330;
+  --muted: #6b7280;
+  --white: #ffffff;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.hidden { display: none !important; }
+body {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #eef1f6;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  background: var(--blue);
+  color: white;
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  flex-wrap: wrap;
+}
+header h1 { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex: 1 1 200px; }
+.header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 1 1 200px; justify-content: flex-end; }
+.header-logo { height: 44px; width: auto; display: block; }
+.header-user { font-size: 13px; opacity: 0.95; display: flex; align-items: center; gap: 6px; }
+.header-status { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.15); }
+.header-status:empty { display: none; }
+.header-status.is-ok { background: rgba(110, 224, 138, 0.25); }
+.header-status.is-error { background: rgba(255, 120, 120, 0.35); font-weight: 600; }
+.header-status.is-pending { opacity: 0.85; }
+
+nav {
+  display: flex;
+  gap: 4px;
+  background: var(--white);
+  padding: 8px 28px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+nav button {
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  border-radius: 8px 8px 0 0;
+}
+nav button:hover { background: var(--gray); }
+nav button.active { color: var(--blue); border-bottom-color: var(--blue); }
+/* Rechte Nav-Gruppe. Das margin haengt am Wrapper, damit die Gruppe rechts
+   bleibt, auch wenn einzelne Buttons ausgeblendet sind. */
+nav .nav-right { margin-left: auto; display: flex; gap: inherit; }
+
+main { max-width: 1000px; margin: 0 auto; padding: 20px 16px 60px; }
+.tab-section { display: none; }
+.tab-section.active { display: block; }
+
+.back-to-dashboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  transition: background 0.15s ease;
+}
+.back-to-dashboard:hover { background: rgba(255, 255, 255, 0.28); text-decoration: none; }
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.card h2 { font-size: 17px; margin-bottom: 14px; color: var(--blue); }
+
+.connect-screen { max-width: 520px; margin: 60px auto; text-align: center; }
+.connect-screen .card { padding: 32px; }
+.connect-screen h2 { color: var(--blue); margin-bottom: 14px; }
+.connect-screen p { color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+.btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+button.btn, .btn {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button.btn:hover, .btn:hover { opacity: 0.9; }
+button.btn:disabled { opacity: 0.45; cursor: default; }
+.btn.secondary { background: var(--gray); color: var(--text); border: 1px solid var(--border); }
+.btn.danger { background: var(--red); }
+.btn.success { background: var(--green); }
+.btn.small { padding: 6px 12px; font-size: 13px; }
+
+/* Textknopf, der wie ein Link aussieht — fuer "zurueck", "bearbeiten",
+   Anhangnamen. Bewusst ein <button>, damit die Tastaturbedienung stimmt. */
+.linkartig {
+  background: none; border: none; padding: 0; margin: 0;
+  color: var(--blue); font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+.linkartig:hover { color: var(--text); }
+#btn-zurueck-liste { margin-bottom: 14px; font-size: 14px; }
+
+.toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.toolbar-titel { font-size: 18px; color: var(--blue); }
+.toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- Kartenliste der Abläufe ---------- */
+#ablauf-karten, #frueher-karten { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.ablauf-karte {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  background: var(--white); border: 1px solid var(--border); border-left: 5px solid var(--blue);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px 18px; cursor: pointer; font: inherit; color: var(--text);
+  /* ⚠️ minmax(0,1fr) oben plus min-width:0 hier — ohne das sprengt ein langer
+     Titel ohne Leerzeichen die Rasterspalte statt umzubrechen. */
+  min-width: 0;
+}
+.ablauf-karte:hover { background: var(--blue-light); }
+.ablauf-karte.betrifft-mich { border-left-color: var(--green); }
+.ak-titel { font-size: 16px; font-weight: 700; color: var(--blue); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; overflow-wrap: anywhere; }
+.ak-zeit { font-size: 14px; font-weight: 600; }
+.ak-ort, .ak-meta { font-size: 12px; color: var(--muted); }
+
+/* ---------- Kopf eines Ablaufs ---------- */
+.kopf-zeile { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.kopf-zeile h2 { margin-bottom: 0; overflow-wrap: anywhere; }
+.kopf-zeitraum { font-size: 15px; font-weight: 600; margin-top: 8px; }
+.kopf-ort { font-size: 14px; color: var(--muted); margin-top: 2px; }
+.kopf-info { margin-top: 10px; font-size: 14px; line-height: 1.5; background: var(--gold-light); border-left: 3px solid var(--gold); padding: 10px 12px; border-radius: 6px; }
+
+/* ---------- Werkzeugleiste über dem Zeitstrahl ---------- */
+.werkzeuge {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 16px; margin-bottom: 16px; box-shadow: var(--shadow);
+}
+.werkzeuge-rechts { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.schalter { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.schalter input { width: 18px; height: 18px; }
+.mannschaft-wahl { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--white); font-family: inherit; }
+
+/* ---------- Zeitstrahl ---------- */
+.tag-ueberschrift {
+  font-size: 15px; color: var(--blue); margin: 20px 0 10px;
+  padding-bottom: 6px; border-bottom: 2px solid var(--border);
+}
+.tag-ueberschrift:first-child { margin-top: 0; }
+
+.punkt-zeile { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 12px; margin-bottom: 10px; align-items: stretch; }
+.pz-zeit { display: flex; flex-direction: column; align-items: flex-end; padding-top: 12px; }
+.pz-start { font-size: 17px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.pz-bis { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pz-karte {
+  background: var(--white); border: 1px solid var(--border); border-left: 4px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; box-shadow: var(--shadow); min-width: 0;
+}
+.punkt-zeile.ist-meiner .pz-karte { border-left-color: var(--green); background: #f4fbf6; }
+.punkt-zeile.ist-meiner .pz-start { color: var(--green); }
+/* Vergangenes tritt zurueck, verschwindet aber nicht — am Medientag will man
+   auch sehen, was schon gelaufen ist. */
+.punkt-zeile.ist-vorbei { opacity: 0.55; }
+.pz-kopf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pz-was { font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.pz-wer { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.pz-ort { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.pz-notiz { font-size: 13px; margin-top: 6px; background: var(--gold-light); padding: 6px 9px; border-radius: 6px; line-height: 1.4; }
+.pz-aktionen { display: flex; gap: 14px; margin-top: 10px; }
+
+.chip {
+  display: inline-block; font-size: 12px; font-weight: 700;
+  background: var(--blue-light); color: var(--blue);
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+}
+.chip-frei { background: var(--gray); color: var(--muted); font-weight: 600; }
+.chip-meine { background: var(--green); color: white; }
+.chip-jetzt { background: var(--red); color: white; }
+
+.jetzt-strich {
+  display: flex; align-items: center; gap: 10px;
+  margin: 14px 0 14px 94px; color: var(--red); font-size: 12px; font-weight: 700;
+}
+.jetzt-strich::before, .jetzt-strich::after { content: ""; height: 2px; background: var(--red); flex: 1; }
+.jetzt-strich span { white-space: nowrap; }
+
+/* ---------- Anhänge ---------- */
+.anhang-zeile { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.anhang-zeile:last-child { border-bottom: none; }
+.icon-btn {
+  background: var(--red-light); color: var(--red); border: none; border-radius: 6px;
+  width: 28px; height: 28px; font-size: 17px; line-height: 1; cursor: pointer; font-weight: 700; margin-left: auto;
+}
+.icon-btn:hover { background: var(--red); color: white; }
+
+/* ---------- Formular / Modal ---------- */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.form-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+.form-field input, .form-field select, .form-field textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+  font-size: 14px; font-family: inherit;
+}
+.form-field textarea { resize: vertical; }
+.form-field.wide { grid-column: 1 / -1; }
+.feld-hinweis { font-size: 12px; color: var(--muted); margin-top: 4px; }
+#meta-view .form-field span { font-size: 14px; }
+.trenner { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+.checkbox-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 14px; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.checkbox-row input { width: 16px; height: 16px; flex: 0 0 auto; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(20, 26, 40, 0.55);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 40px 16px; z-index: 100; overflow-y: auto;
+}
+.modal {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  max-width: 640px; width: 100%; display: flex; flex-direction: column;
+  /* ⚠️ Der Dialog scrollt in sich, nicht die Seite dahinter — sonst ist der
+     Speichern-Knopf bei langen Formularen am Handy nicht erreichbar. */
+  max-height: calc(100vh - 80px);
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+.modal-header h2 { color: var(--blue); font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); padding: 4px 8px; }
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 20px 22px; overflow-y: auto; flex: 1 1 auto; }
+.modal-footer { display: flex; justify-content: space-between; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--border); flex-wrap: wrap; flex: 0 0 auto; }
+
+/* ---------- Vorschauen (Liste einfügen / Verschieben) ---------- */
+.vorschau-titel { font-size: 14px; color: var(--blue); margin: 16px 0 8px; }
+.vorschau-zeile {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline;
+  font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--border);
+}
+.vz-zeit { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 92px; }
+.vz-team { font-weight: 600; color: var(--blue); }
+.vz-was { color: var(--text); overflow-wrap: anywhere; }
+.vz-tag { color: var(--muted); font-size: 12px; margin-left: auto; }
+.vorschau-warnung {
+  margin-top: 12px; font-size: 13px; line-height: 1.5;
+  background: var(--gold-light); border-left: 3px solid var(--gold);
+  padding: 10px 12px; border-radius: 6px;
+}
+.schritt-reihe { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.version-badge {
+  font-size: 11px; font-weight: 600;
+  background: var(--blue-light); border: 1px solid var(--blue-light);
+  border-radius: 999px; padding: 2px 9px; vertical-align: middle; margin-left: 4px; color: var(--blue);
+}
+
+#changelog-list { display: flex; flex-direction: column; gap: 8px; }
+.changelog-entry { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+.changelog-entry .cv { font-weight: 700; color: var(--blue); }
+.changelog-group { display: flex; flex-direction: column; gap: 4px; }
+.changelog-group .cg-title { font-weight: 700; font-size: 14px; color: var(--blue); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+.changelog-group .cg-items { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; color: var(--text); }
+
+#ds-info-karte p { font-size: 13px; line-height: 1.55; margin-bottom: 10px; color: var(--text); }
+#ds-info-karte p:last-child { margin-bottom: 0; }
+
+.muted { color: var(--muted); font-size: 13px; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+code { background: var(--gray); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+
+/* ---------- Druckansicht (Aushang) ---------- */
+#print-area { display: none; }
+body.printing-report > *:not(#print-area) { display: none !important; }
+body.printing-report #print-area { display: block; padding: 20px; }
+#print-area h1 { font-size: 1.5rem; margin-bottom: 4px; color: #000; }
+#print-area .print-meta { font-size: 0.9rem; color: #444; margin-bottom: 12px; }
+#print-area .print-info { font-size: 0.9rem; color: #000; margin-bottom: 14px; border: 1px solid #ccc; padding: 8px 10px; }
+.print-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.print-table th, .print-table td { border: 1px solid #999; padding: 6px 8px; text-align: left; vertical-align: top; color: #000; }
+.print-table th { background: #eee; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.print-table td.druck-zeit { font-weight: 700; white-space: nowrap; }
+.print-table tr.druck-tag td { background: #eee; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+@media print {
+  .print-table tr { page-break-inside: avoid; }
+}
+
+/* ---------- Handy ---------- */
+@media (max-width: 620px) {
+  header { padding: 12px 16px; }
+  nav { padding: 8px 12px 0; }
+  main { padding: 16px 12px 50px; }
+  .punkt-zeile { grid-template-columns: 64px minmax(0, 1fr); gap: 8px; }
+  .pz-start { font-size: 15px; }
+  .jetzt-strich { margin-left: 72px; }
+  .werkzeuge-rechts { margin-left: 0; width: 100%; }
+  #ablauf-karten, #frueher-karten { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* iOS Safari zoomt beim Antippen eines Feldes unter 16px in die Seite hinein —
+   und wieder heraus zoomt es nicht. Die Feldregeln oben laufen ueber Klassen und
+   sind damit hoeher spezifisch als ein reiner Elementsatz, deshalb !important. */
+@media (max-width: 820px) {
+  input, select, textarea { font-size: 16px !important; }
+}

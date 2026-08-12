@@ -1,0 +1,23 @@
+/* Ergänzungen nur für die Seite OHNE Anmeldung (plan.html).
+   Der Grundstil kommt aus style.css; hier steht, was dort fehlt oder anders
+   sein muss — vor allem: kein Dashboard-Link, keine Bearbeiten-Knöpfe. */
+
+.plan-seite header { justify-content: space-between; }
+.plan-seite main { max-width: 820px; }
+
+/* ⚠️ Auf dieser Seite darf nichts auftauchen, was zum angemeldeten Bereich
+   gehört. Die Regel ist eine Sicherung: selbst wenn beim Kopieren einer
+   Vorlage ein Bearbeiten-Knopf mitkäme, wäre er unsichtbar. */
+.plan-seite .editor-only,
+.plan-seite .back-to-dashboard,
+.plan-seite .pz-aktionen { display: none !important; }
+
+.plan-seite .werkzeuge .schalter { cursor: default; }
+.plan-seite .auto-hinweis { margin: 18px 0; text-align: center; }
+.plan-seite #stand-zeile { display: block; margin-top: 2px; }
+
+.plan-seite #ds-karte { margin-top: 26px; }
+.plan-seite #ds-karte p { font-size: 12.5px; line-height: 1.55; margin-bottom: 10px; }
+.plan-seite #ds-karte p:last-child { margin-bottom: 0; }
+
+.plan-seite #fehler-karte h2 { color: var(--red); }
