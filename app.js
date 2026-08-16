@@ -371,6 +371,7 @@ function rasterBlockHtml(block, achse, zustand) {
   const titel = p.was || p.mannschaften.join(" / ") || "Ohne Bezeichnung";
   const wer = p.mannschaften.join(" / ") || p.werFrei || "";
   const klassen = ["ras-block"];
+  if (g.flach) klassen.push("flach");
   if (zustand.vorbei) klassen.push("ist-vorbei");
   if (zustand.meiner) klassen.push("ist-meiner");
   if (zustand.laeuft) klassen.push("laeuft");

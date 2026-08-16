@@ -353,14 +353,29 @@ function parseAblaufText(text, standardDatum, bekannteTeams, neueId) {
 // Höhe einer Stunde in Pixeln. EINZIGE Quelle für Blockposition, Blockhöhe und
 // den Abstand der Stundenlinien; das CSS bekommt den Wert über background-size
 // zugereicht, damit er nicht an zwei Stellen steht.
-const RASTER_STUNDE_PX = 56;
+//
+// ⚠️ 68 und nicht weniger: der häufigste Fall ist ein Halbstundentakt, und ein
+// 34px hoher Block ist die Untergrenze, in der eine Textzeile samt Innenabstand
+// noch vollständig steht. Bei 56 war der Titel in allen Halbstundenblöcken
+// abgeschnitten (Michel am 2026-08-16 am echten Medientag gesehen).
+const RASTER_STUNDE_PX = 68;
 
 // Ein Punkt ohne Endzeit braucht trotzdem eine Fläche. Die Dauer gilt NUR fürs
 // Zeichnen — in den Daten bleibt die Endzeit leer, hier wird nichts ergänzt.
 const RASTER_STANDARD_DAUER = 30;
 
-// Kleinste Blockhöhe, damit ein Fünf-Minuten-Punkt am Handy noch zu treffen ist.
-const RASTER_MIN_HOEHE = 26;
+// Kleinste Blockhöhe, damit ein Fünf-Minuten-Punkt am Handy noch zu treffen ist
+// und eine Zeile Text hineinpasst.
+const RASTER_MIN_HOEHE = 30;
+
+// Luft zwischen zwei aufeinanderfolgenden Blöcken. Ohne sie verschmelzen die
+// Punkte eines lückenlosen Taktes optisch zu einem einzigen langen Balken.
+const RASTER_LUECKE = 3;
+
+// Ab dieser Höhe steht der Inhalt untereinander (Zeit, was, wer). Darunter
+// nebeneinander in einer Zeile — in einen Halbstundenblock passen keine drei
+// Zeilen, und die Spalte ist bei einem eintägigen Ablauf ohnehin breit genug.
+const RASTER_HOCH_AB = 58;
 
 // Kleinste Spanne der Achse. Ohne sie stünde ein einzelner Punkt als schmaler
 // Streifen ohne jede Umgebung da.
@@ -527,13 +542,18 @@ function vergangenePunkte(punkte, jetztIso, jetztMin) {
 }
 
 // Lage eines Blocks: oben/Höhe in Pixeln, links/Breite in Prozent der Spalte.
+// `flach` sagt der Oberfläche, dass der Inhalt in EINE Zeile muss.
 function blockGeometrie(block, achse) {
   const breite = 100 / block.spurAnzahl;
+  // Die Lücke wird von der Dauer abgezogen, die Mindesthöhe gilt danach —
+  // sonst wäre ein Fünf-Minuten-Block am Ende schmaler als das Minimum.
+  const hoehe = Math.max(RASTER_MIN_HOEHE, rasterPx(block.bis - block.von) - RASTER_LUECKE);
   return {
     top: rasterPx(block.von - achse.von),
-    hoehe: Math.max(RASTER_MIN_HOEHE, rasterPx(block.bis - block.von)),
+    hoehe: hoehe,
     links: block.spur * breite,
-    breite: breite
+    breite: breite,
+    flach: hoehe < RASTER_HOCH_AB
   };
 }
 
@@ -568,6 +588,7 @@ if (typeof module !== "undefined" && module.exports) {
     naechsterPunktIndex, punktLaeuft,
     putzeZeile, parseDatumZeile, parseZeitAnfang, parseAblaufText,
     RASTER_STUNDE_PX, RASTER_STANDARD_DAUER, RASTER_MIN_HOEHE, RASTER_MIN_SPANNE,
+    RASTER_LUECKE, RASTER_HOCH_AB,
     rasterPx, punktSpanne, teilePunkteNachZeit, rasterAchse, rasterTage,
     verteileSpuren, vergangenePunkte, blockGeometrie, rasterHoehe, rasterStunden, jetztLinieTop
   };
