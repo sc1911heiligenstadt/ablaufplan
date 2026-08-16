@@ -344,6 +344,219 @@ function parseAblaufText(text, standardDatum, bekannteTeams, neueId) {
   return { punkte, warnungen };
 }
 
+// ---------- Kalenderraster ----------
+//
+// Das Raster zeichnet je Tag eine Spalte auf einer gemeinsamen Zeitachse
+// (Muster: Streamkalender in E:\agelan). Alles hier ist reine Rechnerei — die
+// Oberfläche baut daraus nur noch HTML.
+
+// Höhe einer Stunde in Pixeln. EINZIGE Quelle für Blockposition, Blockhöhe und
+// den Abstand der Stundenlinien; das CSS bekommt den Wert über background-size
+// zugereicht, damit er nicht an zwei Stellen steht.
+const RASTER_STUNDE_PX = 56;
+
+// Ein Punkt ohne Endzeit braucht trotzdem eine Fläche. Die Dauer gilt NUR fürs
+// Zeichnen — in den Daten bleibt die Endzeit leer, hier wird nichts ergänzt.
+const RASTER_STANDARD_DAUER = 30;
+
+// Kleinste Blockhöhe, damit ein Fünf-Minuten-Punkt am Handy noch zu treffen ist.
+const RASTER_MIN_HOEHE = 26;
+
+// Kleinste Spanne der Achse. Ohne sie stünde ein einzelner Punkt als schmaler
+// Streifen ohne jede Umgebung da.
+const RASTER_MIN_SPANNE = 180;
+
+function rasterPx(minuten) {
+  return Math.round((minuten / 60) * RASTER_STUNDE_PX);
+}
+
+// Start und Ende eines Punktes in Minuten, oder null ohne Startzeit.
+//
+// ⚠️ Eine Endzeit, die nicht nach der Startzeit liegt (über Mitternacht
+// getippt, oder schlicht vertippt), wird auf die Standarddauer zurückgesetzt
+// statt geheilt: eine negative Höhe ließe den Block spurlos verschwinden.
+// verschiebeAb heilt so einen Punkt ebenfalls nicht — die Daten bleiben, wie
+// sie sind, nur das Bild wird brauchbar.
+function punktSpanne(punkt) {
+  const start = minutenAusZeit(punkt && punkt.startZeit);
+  if (start === null) return null;
+  const ende = minutenAusZeit(punkt && punkt.endZeit);
+  return { von: start, bis: ende !== null && ende > start ? ende : start + RASTER_STANDARD_DAUER };
+}
+
+// Punkte ohne Uhrzeit haben keine Stelle auf der Achse. Sie werden NICHT
+// verworfen, sondern getrennt zurückgegeben — die Oberfläche stellt sie über
+// das Raster. (Das Formular verlangt eine Startzeit, eine eingefügte Liste
+// oder ein Altbestand kann trotzdem welche ohne enthalten.)
+function teilePunkteNachZeit(punkte) {
+  const mitZeit = [];
+  const ohneZeit = [];
+  sortierePunkte(punkte).forEach((p) => {
+    (minutenAusZeit(p && p.startZeit) === null ? ohneZeit : mitZeit).push(p);
+  });
+  return { mitZeit, ohneZeit };
+}
+
+// Zeitachse des Rasters: früheste Start- bis späteste Endzeit, auf volle
+// Stunden gerundet.
+//
+// Gerechnet wird über die SICHTBAREN Punkte, nicht über alle: wer auf „nur
+// meine" schaltet, will nicht durch die leeren Stunden der anderen scrollen.
+function rasterAchse(punkte) {
+  let von = null;
+  let bis = null;
+  (punkte || []).forEach((p) => {
+    const s = punktSpanne(p);
+    if (!s) return;
+    if (von === null || s.von < von) von = s.von;
+    if (bis === null || s.bis > bis) bis = s.bis;
+  });
+  if (von === null) return { von: 8 * 60, bis: 8 * 60 + RASTER_MIN_SPANNE };
+
+  von = Math.max(0, Math.floor(von / 60) * 60);
+  // Über die Tagesgrenze wird nicht gezeichnet. Ein Punkt, dessen Standarddauer
+  // darüber hinausreicht, wird von der Fläche beschnitten — seine echte Zeit
+  // steht unverändert in der Liste darunter.
+  bis = Math.min(1440, Math.ceil(bis / 60) * 60);
+  if (bis - von < RASTER_MIN_SPANNE) {
+    bis = Math.min(1440, von + RASTER_MIN_SPANNE);
+    von = Math.max(0, bis - RASTER_MIN_SPANNE);
+  }
+  return { von, bis };
+}
+
+// Die Tage, an denen wirklich etwas steht — in Kalenderreihenfolge. Leere Tage
+// mitten in einem Trainingslager werden bewusst nicht erfunden: eine leere
+// Spalte kostet Platz und sagt nichts.
+function rasterTage(punkte) {
+  const gesehen = new Set();
+  const tage = [];
+  sortierePunkte(punkte).forEach((p) => {
+    const d = (p && p.datum) || "";
+    if (d && !gesehen.has(d)) { gesehen.add(d); tage.push(d); }
+  });
+  return tage;
+}
+
+// Überschneidende Punkte nebeneinander legen statt übereinander. Am Medientag
+// laufen Einzel- und Mannschaftsfotos parallel — Überschneidungen sind erlaubt
+// (die Endzeit wird bewusst nicht gegen den nächsten Punkt geprüft), also darf
+// kein Block hinter einem anderen verschwinden.
+//
+// ⚠️ Liefert HÜLLEN und schreibt nichts in die Punkte. In app.js sind das die
+// echten Datensätze aus appData — eine hier gesetzte Eigenschaft „spur" wäre
+// beim nächsten Speichern in ablaufplan.json gelandet.
+//
+// Die Breite teilen sich nur Blöcke, die über eine Kette von Überschneidungen
+// zusammenhängen. Sonst machte EINE Überschneidung am Vormittag alle Blöcke des
+// ganzen Tages halb so breit.
+function verteileSpuren(punkte) {
+  const bloecke = [];
+  sortierePunkte(punkte).forEach((p) => {
+    const s = punktSpanne(p);
+    if (s) bloecke.push({ punkt: p, von: s.von, bis: s.bis, spur: 0, spurAnzahl: 1 });
+  });
+
+  let gruppe = [];
+  let gruppenEnde = -1;
+
+  function gruppeAbschliessen() {
+    if (!gruppe.length) return;
+    const spurEnde = [];
+    gruppe.forEach((b) => {
+      let spur = spurEnde.findIndex((ende) => ende <= b.von);
+      if (spur === -1) { spurEnde.push(b.bis); spur = spurEnde.length - 1; }
+      else { spurEnde[spur] = b.bis; }
+      b.spur = spur;
+    });
+    const anzahl = Math.max(1, spurEnde.length);
+    gruppe.forEach((b) => { b.spurAnzahl = anzahl; });
+    gruppe = [];
+  }
+
+  bloecke.forEach((b) => {
+    // Berührung (Ende == nächster Start) ist keine Überschneidung.
+    if (gruppe.length && b.von >= gruppenEnde) { gruppeAbschliessen(); gruppenEnde = -1; }
+    gruppe.push(b);
+    if (b.bis > gruppenEnde) gruppenEnde = b.bis;
+  });
+  gruppeAbschliessen();
+
+  return bloecke;
+}
+
+// Welche Punkte sind schon gelaufen? Liefert ein Set der Punkt-OBJEKTE, damit
+// es ohne ids auskommt (über den offenen Link sind die Punkte Fremddaten).
+//
+// ⚠️ Bewusst NICHT über naechsterPunktIndex abgeleitet. Ein Punkt ohne Uhrzeit
+// steht in der Sortierung ganz vorn, und naechsterPunktIndex bleibt bei ihm
+// stehen — mit einem einzigen zeitlosen Punkt im Ablauf wäre abends noch alles
+// „kommt noch". Beim Bauen des Rasters genau so aufgeschlagen.
+//
+// Ende eines Punktes ist seine Endzeit; fehlt die, der Beginn des nächsten
+// Punktes am selben Tag; fehlt auch der, die Standarddauer. Damit wird eine
+// Mittagspause ohne Endzeit nicht nach einer halben Stunde grau, während ein
+// letzter Punkt ohne Endzeit trotzdem irgendwann abläuft.
+function vergangenePunkte(punkte, jetztIso, jetztMin) {
+  const sortiert = sortierePunkte(punkte);
+  const vorbei = new Set();
+
+  sortiert.forEach((p, i) => {
+    const datum = String((p && p.datum) || "");
+    if (!datum) return;
+    if (datum < jetztIso) { vorbei.add(p); return; }
+    if (datum > jetztIso) return;
+
+    const start = minutenAusZeit(p.startZeit);
+    if (start === null) return;   // ohne Uhrzeit gilt ein Punkt nie als gelaufen
+
+    const ende = minutenAusZeit(p.endZeit);
+    let schluss = ende !== null && ende > start ? ende : null;
+    if (schluss === null) {
+      for (let j = i + 1; j < sortiert.length; j++) {
+        if (String(sortiert[j].datum || "") !== datum) break;
+        const s = minutenAusZeit(sortiert[j].startZeit);
+        if (s !== null && s > start) { schluss = s; break; }
+      }
+    }
+    if (schluss === null) schluss = start + RASTER_STANDARD_DAUER;
+    if (schluss <= jetztMin) vorbei.add(p);
+  });
+
+  return vorbei;
+}
+
+// Lage eines Blocks: oben/Höhe in Pixeln, links/Breite in Prozent der Spalte.
+function blockGeometrie(block, achse) {
+  const breite = 100 / block.spurAnzahl;
+  return {
+    top: rasterPx(block.von - achse.von),
+    hoehe: Math.max(RASTER_MIN_HOEHE, rasterPx(block.bis - block.von)),
+    links: block.spur * breite,
+    breite: breite
+  };
+}
+
+// Höhe der gesamten Rasterfläche.
+function rasterHoehe(achse) {
+  return rasterPx(achse.bis - achse.von);
+}
+
+// Die vollen Stunden der Achse, für die Beschriftung links.
+function rasterStunden(achse) {
+  const marken = [];
+  for (let m = achse.von; m < achse.bis; m += 60) marken.push(m);
+  return marken;
+}
+
+// Position der Jetzt-Linie in der Spalte eines Tages — null, wenn dieser Tag
+// nicht heute ist oder die Uhrzeit außerhalb der gezeichneten Achse liegt.
+function jetztLinieTop(datum, achse, jetztIso, jetztMin) {
+  if (String(datum || "") !== jetztIso) return null;
+  if (jetztMin < achse.von || jetztMin > achse.bis) return null;
+  return rasterPx(jetztMin - achse.von);
+}
+
 // Für Node-Prüfungen. Im Browser gibt es kein module — dann bleibt alles global.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
@@ -353,6 +566,9 @@ if (typeof module !== "undefined" && module.exports) {
     punktSortKey, sortierePunkte,
     verschiebeAb, synchronisiereZeitraum, istVergangen,
     naechsterPunktIndex, punktLaeuft,
-    putzeZeile, parseDatumZeile, parseZeitAnfang, parseAblaufText
+    putzeZeile, parseDatumZeile, parseZeitAnfang, parseAblaufText,
+    RASTER_STUNDE_PX, RASTER_STANDARD_DAUER, RASTER_MIN_HOEHE, RASTER_MIN_SPANNE,
+    rasterPx, punktSpanne, teilePunkteNachZeit, rasterAchse, rasterTage,
+    verteileSpuren, vergangenePunkte, blockGeometrie, rasterHoehe, rasterStunden, jetztLinieTop
   };
 }

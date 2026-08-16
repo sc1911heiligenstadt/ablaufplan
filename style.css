@@ -223,6 +223,107 @@ button.btn:disabled { opacity: 0.45; cursor: default; }
 .jetzt-strich::before, .jetzt-strich::after { content: ""; height: 2px; background: var(--red); flex: 1; }
 .jetzt-strich span { white-space: nowrap; }
 
+/* ---------- Kalenderraster ----------
+   Je Tag eine Spalte auf einer gemeinsamen Zeitachse. Vorbild ist der
+   Streamkalender in E:\agelan (.sk-*). Alle Maße kommen aus zeitlogik.js —
+   Blockposition, Blockhöhe und der Abstand der Stundenlinien werden per
+   style-Attribut gesetzt, damit RASTER_STUNDE_PX nur an einer Stelle steht. */
+
+.ras-kopfzeile { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.ras-kopfzeile h3 { font-size: 15px; color: var(--blue); }
+.ras-legende { font-size: 12px; color: var(--muted); }
+
+/* Tageschips: nur am Handy und nur bei mehr als einem Tag (app.js blendet die
+   Leiste bei einem einzigen Tag ganz aus). */
+.ras-tagchips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.ras-chip {
+  background: var(--white); border: 1px solid var(--border); color: var(--text);
+  border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.ras-chip.aktiv { background: var(--blue); border-color: var(--blue); color: var(--white); }
+.ras-chip-zahl { opacity: 0.75; font-weight: 400; }
+
+/* ⚠️ Der Überlauf gehört HIERHIN, nicht auf die Seite: bei vier Tagen nebeneinander
+   soll das Raster in sich scrollen und nicht der ganze Body. */
+.ras-raster { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; }
+
+.ras-zeitspalte { flex: 0 0 52px; }
+.ras-zeitmarke { font-size: 11px; color: var(--muted); text-align: right; padding-right: 6px; font-variant-numeric: tabular-nums; }
+/* Die Beschriftung sitzt auf der Stundenlinie, nicht mittig im Kasten. */
+.ras-zeitmarke span { position: relative; top: -7px; }
+.ras-zeitkopf { visibility: hidden; }
+
+/* Am Handy ist nur der über die Chips gewählte Tag sichtbar, ab Tabletbreite
+   stehen alle Tage nebeneinander und die Chips verschwinden. */
+.ras-tag { flex: 1 1 0; min-width: 190px; display: none; }
+.ras-tag.aktiv { display: block; }
+@media (min-width: 760px) {
+  .ras-tagchips { display: none; }
+  .ras-tag { display: block; }
+}
+
+.ras-tagkopf {
+  font-size: 13px; font-weight: 700; text-align: center; padding: 7px 4px;
+  background: var(--blue-light); color: var(--blue);
+  border: 1px solid var(--border); border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ras-tagkopf.ist-heute { background: var(--blue); color: var(--white); }
+
+.ras-flaeche {
+  position: relative;
+  background-color: var(--white);
+  /* Stundenlinien; den Abstand setzt die Oberfläche über background-size. */
+  background-image: linear-gradient(to bottom, var(--border) 0, var(--border) 1px, transparent 1px);
+  background-repeat: repeat-y;
+  border: 1px solid var(--border);
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
+
+/* Die Jetzt-Linie liegt über den Blöcken, fängt aber keine Klicks ab. */
+.ras-jetzt { position: absolute; left: 0; right: 0; height: 2px; background: var(--red); pointer-events: none; z-index: 3; }
+.ras-jetzt span {
+  position: absolute; right: 2px; top: -8px;
+  background: var(--red); color: var(--white);
+  font-size: 10px; font-weight: 700; line-height: 1;
+  padding: 2px 6px; border-radius: 999px; font-variant-numeric: tabular-nums;
+}
+
+.ras-block {
+  position: absolute; overflow: hidden;
+  display: flex; flex-direction: column; gap: 1px;
+  background: var(--blue); color: var(--white);
+  border: none; border-radius: 6px; padding: 3px 6px;
+  font-family: inherit; text-align: left; line-height: 1.2; cursor: pointer;
+}
+/* Eigene Punkte grün — dieselbe Bedeutung wie der grüne Rand in der Liste. */
+.ras-block.ist-meiner { background: var(--green); }
+/* Vergangenes tritt zurück, verschwindet aber nicht: am Medientag will man auch
+   sehen, was schon gelaufen ist. */
+.ras-block.ist-vorbei { opacity: 0.45; }
+/* Was gerade läuft, bekommt einen Ring — die Jetzt-Linie allein ist bei
+   nebeneinanderliegenden Blöcken nicht eindeutig. */
+.ras-block.laeuft { box-shadow: 0 0 0 2px var(--gold); z-index: 2; }
+.ras-block-zeit { font-size: 10px; opacity: 0.85; font-variant-numeric: tabular-nums; }
+.ras-block-was { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.ras-block-wer { font-size: 11px; opacity: 0.9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Punkte ohne Uhrzeit haben keine Stelle auf der Achse. Sie werden nicht
+   verworfen, sondern stehen über dem Raster. */
+.ras-ohnezeit { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; align-items: center; }
+.ras-ohnezeit-label { font-size: 12px; color: var(--muted); }
+.ras-ohnezeit button {
+  background: var(--gray); border: 1px dashed var(--border); color: var(--text);
+  border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+
+/* Ziel des Klicks auf einen Block: die Zeile in der Liste darunter blitzt kurz auf. */
+.punkt-zeile.hervorgehoben .pz-karte { box-shadow: 0 0 0 3px var(--gold); }
+
 /* ---------- Anhänge ---------- */
 .anhang-zeile { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .anhang-zeile:last-child { border-bottom: none; }

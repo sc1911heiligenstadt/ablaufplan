@@ -19,6 +19,9 @@ let offenerAblaufId = null;
 let punktModalId = null;        // null = neuer Punkt
 let verschiebeAbId = null;
 let speichertGerade = false;
+// Am Handy steht im Raster nur ein Tag; welcher, sagt dieser Merker. null = der
+// erste Tag, an dem etwas steht. Wird beim Ablaufwechsel zurückgesetzt.
+let aktiverRasterTag = null;
 
 const LS_NUR_MEINE = "ablaufplan_nur_meine";
 const LS_MEINE_MANNSCHAFT = "ablaufplan_meine_mannschaft";
@@ -297,6 +300,32 @@ function trainerZuPunkt(p) {
   return namen;
 }
 
+// Zustand jedes sichtbaren Punktes — die EINE Quelle für Raster und Liste.
+// Getrennt gerechnet liefen die beiden Ansichten irgendwann auseinander und
+// derselbe Punkt wäre oben grün und unten grau.
+//
+// Schlüssel ist das Punkt-OBJEKT, nicht die id: plan.js rechnet mit denselben
+// Funktionen auf Fremddaten, in denen eine id fehlen kann.
+function punktZustaende(punkte) {
+  const heute = heuteIso();
+  const jetzt = jetztMinuten();
+  const meine = meineMannschaften();
+  // naechsterPunktIndex nur noch für die Stelle des Jetzt-Strichs in der Liste.
+  // Ob ein Punkt gelaufen ist, entscheidet vergangenePunkte je Punkt — siehe
+  // den Hinweis dort.
+  const naechster = naechsterPunktIndex(punkte, heute, jetzt);
+  const vorbei = vergangenePunkte(punkte, heute, jetzt);
+  const map = new Map();
+  punkte.forEach((p) => {
+    map.set(p, {
+      vorbei: vorbei.has(p),
+      meiner: meine.length > 0 && punktBetrifft(p, meine),
+      laeuft: punktLaeuft(p, heute, jetzt)
+    });
+  });
+  return { map, heute, jetzt, naechster };
+}
+
 function punktKarteHtml(p, zustand) {
   const teams = p.mannschaften.map((m) => `<span class="chip">${escapeHtml(m)}</span>`).join("");
   const wer = p.werFrei ? `<span class="chip chip-frei">${escapeHtml(p.werFrei)}</span>` : "";
@@ -326,19 +355,113 @@ function punktKarteHtml(p, zustand) {
   </div>`;
 }
 
-function renderZeitstrahl() {
+// ---------- Rendern: Kalenderraster ----------
+//
+// Je Tag eine Spalte auf einer gemeinsamen Zeitachse (Muster: Streamkalender in
+// E:\agelan). Die Rechnerei steht komplett in zeitlogik.js; hier wird nur noch
+// HTML daraus.
+
+function zeitspanneText(p) {
+  return escapeHtml(p.startZeit || "") + (p.endZeit ? "–" + escapeHtml(p.endZeit) : "");
+}
+
+function rasterBlockHtml(block, achse, zustand) {
+  const p = block.punkt;
+  const g = blockGeometrie(block, achse);
+  const titel = p.was || p.mannschaften.join(" / ") || "Ohne Bezeichnung";
+  const wer = p.mannschaften.join(" / ") || p.werFrei || "";
+  const klassen = ["ras-block"];
+  if (zustand.vorbei) klassen.push("ist-vorbei");
+  if (zustand.meiner) klassen.push("ist-meiner");
+  if (zustand.laeuft) klassen.push("laeuft");
+
+  // In einen halbstündigen Block passt oft nur eine Zeile. Was abgeschnitten
+  // wird, steht im Titel-Attribut und vollständig in der Liste darunter.
+  const tooltip = [
+    (p.startZeit || "") + (p.endZeit ? "–" + p.endZeit : ""),
+    titel, wer, p.ort ? "📍 " + p.ort : ""
+  ].filter(Boolean).join(" · ");
+
+  return `<button type="button" class="${klassen.join(" ")}" data-block="${escapeHtml(p.id)}"
+    title="${escapeHtml(tooltip)}"
+    style="top:${g.top}px;height:${g.hoehe}px;left:${g.links}%;width:calc(${g.breite}% - 4px)">
+    <span class="ras-block-zeit">${zeitspanneText(p)}</span>
+    <span class="ras-block-was">${escapeHtml(titel)}</span>
+    ${wer ? `<span class="ras-block-wer">${escapeHtml(wer)}</span>` : ""}
+  </button>`;
+}
+
+function renderRaster(punkte, zustaende) {
+  const ziel = document.getElementById("raster-bereich");
+  const { mitZeit, ohneZeit } = teilePunkteNachZeit(punkte);
+  const tage = rasterTage(mitZeit);
+
+  if (!tage.length) {
+    // Ohne einen einzigen Punkt mit Uhrzeit gibt es keine Achse. Die Punkte
+    // ohne Zeit stehen dann trotzdem in der Liste darunter — hier nichts.
+    ziel.innerHTML = "";
+    return;
+  }
+
+  // ⚠️ Der gemerkte Tag kann durch „nur meine" weggefallen sein. Dann auf den
+  // ersten Tag zurückfallen, statt eine leere Spalte zu zeigen.
+  if (!aktiverRasterTag || tage.indexOf(aktiverRasterTag) < 0) aktiverRasterTag = tage[0];
+
+  const achse = rasterAchse(mitZeit);
+  const hoehe = rasterHoehe(achse);
+
+  const marken = rasterStunden(achse)
+    .map((m) => `<div class="ras-zeitmarke" style="height:${RASTER_STUNDE_PX}px"><span>${zeitAusMinuten(m)}</span></div>`)
+    .join("");
+
+  const spalten = tage.map((tag) => {
+    const bloecke = verteileSpuren(mitZeit.filter((p) => p.datum === tag));
+    const top = jetztLinieTop(tag, achse, zustaende.heute, zustaende.jetzt);
+    const jetztLinie = top === null ? ""
+      : `<div class="ras-jetzt" style="top:${top}px"><span>${zeitAusMinuten(zustaende.jetzt)}</span></div>`;
+
+    return `<div class="ras-tag${tag === aktiverRasterTag ? " aktiv" : ""}" data-tag="${escapeHtml(tag)}">
+      <div class="ras-tagkopf${tag === zustaende.heute ? " ist-heute" : ""}">${escapeHtml(datumText(tag))}</div>
+      <div class="ras-flaeche" style="height:${hoehe}px;background-size:100% ${RASTER_STUNDE_PX}px">
+        ${jetztLinie}
+        ${bloecke.map((b) => rasterBlockHtml(b, achse, zustaende.map.get(b.punkt) || {})).join("")}
+      </div>
+    </div>`;
+  });
+
+  // Die Chips schalten am Handy zwischen den Tagen um. Bei einem einzigen Tag
+  // wären sie ein Knopf ohne Wahl — dann bleiben sie weg.
+  const chips = tage.length < 2 ? "" :
+    `<div class="ras-tagchips">${tage.map((tag) =>
+      `<button type="button" class="ras-chip${tag === aktiverRasterTag ? " aktiv" : ""}" data-tagchip="${escapeHtml(tag)}">
+        ${escapeHtml(datumKurz(tag))} <span class="ras-chip-zahl">${mitZeit.filter((p) => p.datum === tag).length}</span>
+      </button>`).join("")}</div>`;
+
+  // Punkte ohne Uhrzeit haben keine Stelle auf der Achse — sie stehen darüber,
+  // statt still zu verschwinden.
+  const ohne = !ohneZeit.length ? "" :
+    `<div class="ras-ohnezeit"><span class="ras-ohnezeit-label">Ohne feste Zeit:</span>${ohneZeit.map((p) =>
+      `<button type="button" data-block="${escapeHtml(p.id)}">${escapeHtml(p.was || p.mannschaften.join(" / ") || "Ohne Bezeichnung")}</button>`
+    ).join("")}</div>`;
+
+  ziel.innerHTML = `
+    <div class="ras-kopfzeile">
+      <h3>Zeitplan</h3>
+      <span class="ras-legende">Antippen springt zum Punkt in der Liste.</span>
+    </div>
+    ${ohne}
+    ${chips}
+    <div class="ras-raster">
+      <div class="ras-zeitspalte"><div class="ras-tagkopf ras-zeitkopf">.</div>${marken}</div>
+      ${spalten.join("")}
+    </div>`;
+}
+
+// ---------- Rendern: Liste unter dem Raster ----------
+
+function renderZeitstrahl(punkte, zustaende) {
   const a = offenerAblauf();
   const ziel = document.getElementById("zeitstrahl");
-  if (!a) { ziel.innerHTML = ""; return; }
-
-  const punkte = sichtbarePunkte(a);
-  document.getElementById("punkte-empty").classList.toggle("hidden", punkte.length > 0);
-  if (!punkte.length) { ziel.innerHTML = ""; return; }
-
-  const heute = heuteIso();
-  const jetzt = jetztMinuten();
-  const meine = meineMannschaften();
-  const naechster = naechsterPunktIndex(punkte, heute, jetzt);
 
   // Nach Tagen gruppieren. Bei einem eintägigen Ablauf bleibt die Tagesüberschrift
   // weg — sie stünde sonst als einzelne Zeile über allem und sagte nichts Neues.
@@ -354,26 +477,54 @@ function renderZeitstrahl() {
     }
     // Der Jetzt-Strich steht genau vor dem ersten Punkt, der noch kommt — aber
     // nur, wenn dieser Ablauf heute überhaupt läuft.
-    if (!jetztStrichGesetzt && i === naechster && p.datum === heute) {
-      html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(jetzt)}</span></div>`;
+    if (!jetztStrichGesetzt && i === zustaende.naechster && p.datum === zustaende.heute) {
+      html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(zustaende.jetzt)}</span></div>`;
       jetztStrichGesetzt = true;
     }
+    const z = zustaende.map.get(p) || {};
     html += punktKarteHtml(p, {
-      klassen: [
-        i < naechster ? "ist-vorbei" : "",
-        punktBetrifft(p, meine) ? "ist-meiner" : ""
-      ].filter(Boolean).join(" "),
-      laeuft: punktLaeuft(p, heute, jetzt),
-      meiner: meine.length > 0 && punktBetrifft(p, meine)
+      klassen: [z.vorbei ? "ist-vorbei" : "", z.meiner ? "ist-meiner" : ""].filter(Boolean).join(" "),
+      laeuft: z.laeuft,
+      meiner: z.meiner
     });
   });
 
   // Läuft der Tag schon länger als der letzte Punkt, steht der Strich am Ende.
-  if (!jetztStrichGesetzt && naechster >= punkte.length && punkte.some((p) => p.datum === heute)) {
-    html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(jetzt)}</span></div>`;
+  if (!jetztStrichGesetzt && zustaende.naechster >= punkte.length && punkte.some((p) => p.datum === zustaende.heute)) {
+    html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(zustaende.jetzt)}</span></div>`;
   }
 
   ziel.innerHTML = html;
+}
+
+// Raster und Liste zusammen — beide bekommen dieselben Punkte und denselben
+// Zustand, damit sie nie unterschiedlich einfärben.
+function renderPunkte() {
+  const a = offenerAblauf();
+  const raster = document.getElementById("raster-bereich");
+  const ziel = document.getElementById("zeitstrahl");
+  if (!a) { raster.innerHTML = ""; ziel.innerHTML = ""; return; }
+
+  const punkte = sichtbarePunkte(a);
+  document.getElementById("punkte-empty").classList.toggle("hidden", punkte.length > 0);
+  if (!punkte.length) { raster.innerHTML = ""; ziel.innerHTML = ""; return; }
+
+  const zustaende = punktZustaende(punkte);
+  renderRaster(punkte, zustaende);
+  renderZeitstrahl(punkte, zustaende);
+}
+
+// Klick auf einen Block im Raster: die Zeile in der Liste holen, hervorheben
+// und dorthin scrollen. Bewusst kein direktes Öffnen des Formulars — der Weg
+// ist derselbe für Seher wie für Bearbeiter, und in der Zeile stehen die
+// Knöpfe ohnehin.
+function springeZuPunkt(punktId) {
+  const zeile = document.querySelector('.punkt-zeile[data-punkt="' + (window.CSS && CSS.escape ? CSS.escape(punktId) : punktId) + '"]');
+  if (!zeile) return;
+  document.querySelectorAll(".punkt-zeile.hervorgehoben").forEach((el) => el.classList.remove("hervorgehoben"));
+  zeile.classList.add("hervorgehoben");
+  zeile.scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(() => zeile.classList.remove("hervorgehoben"), 2000);
 }
 
 function renderAnhaenge() {
@@ -420,7 +571,7 @@ function renderDetail() {
   renderDetailKopf(a);
   renderWerkzeuge();
   renderAnhaenge();
-  renderZeitstrahl();
+  renderPunkte();
 }
 
 function renderAlles() {
@@ -1024,13 +1175,21 @@ function setupListeners() {
   // Filter
   document.getElementById("nur-meine").addEventListener("change", (e) => {
     lsSchreiben(LS_NUR_MEINE, e.target.checked ? "1" : "0");
-    renderZeitstrahl();
+    renderPunkte();
     renderListen();
   });
   document.getElementById("meine-mannschaft").addEventListener("change", (e) => {
     lsSchreiben(LS_MEINE_MANNSCHAFT, e.target.value);
-    renderZeitstrahl();
+    renderPunkte();
     renderListen();
+  });
+
+  // Raster: Tageswahl am Handy und Sprung von einem Block in die Liste.
+  document.getElementById("raster-bereich").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-tagchip]");
+    if (chip) { aktiverRasterTag = chip.dataset.tagchip; renderPunkte(); return; }
+    const block = e.target.closest("[data-block]");
+    if (block) springeZuPunkt(block.dataset.block);
   });
 
   // Anhänge
@@ -1096,8 +1255,9 @@ function setupListeners() {
     document.getElementById(id).addEventListener("click", () =>
       document.getElementById("link-modal").classList.add("hidden")));
 
-  // Der Jetzt-Strich wandert von allein weiter, solange die Seite offen ist.
-  setInterval(() => { if (offenerAblauf()) renderZeitstrahl(); }, AUTO_REFRESH_MS);
+  // Jetzt-Linie und Jetzt-Strich wandern von allein weiter, solange die Seite
+  // offen ist.
+  setInterval(() => { if (offenerAblauf()) renderPunkte(); }, AUTO_REFRESH_MS);
 }
 
 // ---------- Start ----------

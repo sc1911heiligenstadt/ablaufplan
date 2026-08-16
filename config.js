@@ -20,6 +20,28 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.3",
+    groups: [
+      {
+        title: "Der Tag steht jetzt als Kalender da",
+        items: [
+          "Über der Liste liegt neu ein Zeitraster: links die Uhrzeiten, rechts je Tag eine Spalte. Jeder Punkt ist ein Kästchen, dessen Höhe seiner Dauer entspricht — ein Blick genügt, um zu sehen, wo Luft ist und wo es eng wird.",
+          "Punkte, die gleichzeitig laufen, stehen nebeneinander statt hintereinander. Am Medientag sieht man so auf einen Blick, dass Einzel- und Mannschaftsfotos parallel gehen.",
+          "Eine rote Linie zeigt am laufenden Tag, wo gerade „jetzt“ ist. Was gelaufen ist, tritt zurück; was gerade läuft, ist umrandet.",
+          "Die gewohnte Liste bleibt darunter stehen — mit allen Angaben, Trainernamen und Knöpfen. Ein Tipp auf ein Kästchen springt zur passenden Zeile.",
+          "Bei einem Ablauf über mehrere Tage stehen die Tage am Rechner nebeneinander. Am Handy wählt man den Tag über die Knöpfe darüber.",
+          "Ein Punkt ohne Uhrzeit hat keine Stelle im Raster — er steht als Kästchen darüber, statt zu verschwinden."
+        ]
+      },
+      {
+        title: "Nebenbei behoben",
+        items: [
+          "Enthielt ein Ablauf einen Punkt ohne Uhrzeit, galt für die App der ganze Tag als „steht noch bevor“ — auch am Abend war nichts als erledigt markiert. Jetzt wird für jeden Punkt einzeln nach seiner eigenen Zeit entschieden."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.2",
     groups: [
       {

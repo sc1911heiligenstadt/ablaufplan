@@ -9,6 +9,8 @@ const LS_PLAN_MANNSCHAFT = "ablaufplan_plan_mannschaft";
 
 let ablauf = null;
 let token = "";
+// Am Handy steht im Raster nur ein Tag; welcher, sagt dieser Merker.
+let aktiverRasterTag = null;
 
 function escapeHtml(s) {
   return String(s === null || s === undefined ? "" : s)
@@ -84,11 +86,30 @@ function renderAuswahl() {
   wahl.classList.toggle("hidden", namen.length === 0);
 }
 
+// Zustand jedes sichtbaren Punktes — die EINE Quelle für Raster und Liste.
+//
+// ⚠️ Schlüssel ist der LAUFINDEX, nicht die id. Die Punkte kommen als Fremddaten
+// aus dem Worker; eine fehlende id (Altbestand) würde sonst alle Einträge auf
+// denselben Schlüssel legen.
+function punktZustaende(punkte) {
+  const heute = heuteIso();
+  const jetzt = jetztMinuten();
+  // naechsterPunktIndex nur noch für die Stelle des Jetzt-Strichs in der Liste;
+  // ob ein Punkt gelaufen ist, entscheidet vergangenePunkte je Punkt.
+  const naechster = naechsterPunktIndex(punkte, heute, jetzt);
+  const vorbei = vergangenePunkte(punkte, heute, jetzt);
+  const map = new Map();
+  punkte.forEach((p, i) => {
+    map.set(p, { nr: i, vorbei: vorbei.has(p), laeuft: punktLaeuft(p, heute, jetzt) });
+  });
+  return { map, heute, jetzt, naechster };
+}
+
 function punktHtml(p, zustand) {
   const teams = (p.mannschaften || []).map((m) => `<span class="chip">${escapeHtml(m)}</span>`).join("");
   const wer = p.werFrei ? `<span class="chip chip-frei">${escapeHtml(p.werFrei)}</span>` : "";
   const titel = p.was || (p.mannschaften || []).join(" / ") || "Ohne Bezeichnung";
-  return `<div class="punkt-zeile ${zustand.klassen}">
+  return `<div class="punkt-zeile ${zustand.vorbei ? "ist-vorbei" : ""}" data-punkt="${zustand.nr}">
     <div class="pz-zeit">
       <span class="pz-start">${escapeHtml(p.startZeit || "—")}</span>
       ${p.endZeit ? `<span class="pz-bis">bis ${escapeHtml(p.endZeit)}</span>` : ""}
@@ -105,24 +126,96 @@ function punktHtml(p, zustand) {
   </div>`;
 }
 
-function renderZeitstrahl() {
-  const punkte = sichtbarePunkte();
+// ---------- Kalenderraster ----------
+//
+// Dasselbe Bild wie in der App: je Tag eine Spalte auf einer gemeinsamen
+// Zeitachse. Die Rechnerei steht in zeitlogik.js und wird von beiden Seiten
+// benutzt — wer den Link bekommt, soll denselben Plan sehen wie der Trainer.
+
+function rasterBlockHtml(block, achse, zustand) {
+  const p = block.punkt;
+  const g = blockGeometrie(block, achse);
+  const titel = p.was || (p.mannschaften || []).join(" / ") || "Ohne Bezeichnung";
+  const wer = (p.mannschaften || []).join(" / ") || p.werFrei || "";
+  const klassen = ["ras-block"];
+  if (zustand.vorbei) klassen.push("ist-vorbei");
+  if (zustand.laeuft) klassen.push("laeuft");
+
+  // In einen halbstündigen Block passt oft nur eine Zeile. Was abgeschnitten
+  // wird, steht im Titel-Attribut und vollständig in der Liste darunter.
+  const tooltip = [
+    (p.startZeit || "") + (p.endZeit ? "–" + p.endZeit : ""),
+    titel, wer, p.ort ? "📍 " + p.ort : ""
+  ].filter(Boolean).join(" · ");
+
+  return `<button type="button" class="${klassen.join(" ")}" data-block="${zustand.nr}"
+    title="${escapeHtml(tooltip)}"
+    style="top:${g.top}px;height:${g.hoehe}px;left:${g.links}%;width:calc(${g.breite}% - 4px)">
+    <span class="ras-block-zeit">${escapeHtml(p.startZeit || "")}${p.endZeit ? "–" + escapeHtml(p.endZeit) : ""}</span>
+    <span class="ras-block-was">${escapeHtml(titel)}</span>
+    ${wer ? `<span class="ras-block-wer">${escapeHtml(wer)}</span>` : ""}
+  </button>`;
+}
+
+function renderRaster(punkte, zustaende) {
+  const ziel = document.getElementById("raster-bereich");
+  const { mitZeit, ohneZeit } = teilePunkteNachZeit(punkte);
+  const tage = rasterTage(mitZeit);
+
+  if (!tage.length) { ziel.innerHTML = ""; return; }
+
+  // ⚠️ Der gemerkte Tag kann durch den Mannschaftsfilter weggefallen sein.
+  if (!aktiverRasterTag || tage.indexOf(aktiverRasterTag) < 0) aktiverRasterTag = tage[0];
+
+  const achse = rasterAchse(mitZeit);
+  const hoehe = rasterHoehe(achse);
+  const nr = (p) => (zustaende.map.get(p) || {}).nr;
+
+  const marken = rasterStunden(achse)
+    .map((m) => `<div class="ras-zeitmarke" style="height:${RASTER_STUNDE_PX}px"><span>${zeitAusMinuten(m)}</span></div>`)
+    .join("");
+
+  const spalten = tage.map((tag) => {
+    const bloecke = verteileSpuren(mitZeit.filter((p) => p.datum === tag));
+    const top = jetztLinieTop(tag, achse, zustaende.heute, zustaende.jetzt);
+    const jetztLinie = top === null ? ""
+      : `<div class="ras-jetzt" style="top:${top}px"><span>${zeitAusMinuten(zustaende.jetzt)}</span></div>`;
+
+    return `<div class="ras-tag${tag === aktiverRasterTag ? " aktiv" : ""}" data-tag="${escapeHtml(tag)}">
+      <div class="ras-tagkopf${tag === zustaende.heute ? " ist-heute" : ""}">${escapeHtml(datumText(tag))}</div>
+      <div class="ras-flaeche" style="height:${hoehe}px;background-size:100% ${RASTER_STUNDE_PX}px">
+        ${jetztLinie}
+        ${bloecke.map((b) => rasterBlockHtml(b, achse, zustaende.map.get(b.punkt) || {})).join("")}
+      </div>
+    </div>`;
+  });
+
+  const chips = tage.length < 2 ? "" :
+    `<div class="ras-tagchips">${tage.map((tag) =>
+      `<button type="button" class="ras-chip${tag === aktiverRasterTag ? " aktiv" : ""}" data-tagchip="${escapeHtml(tag)}">
+        ${escapeHtml(datumKurz(tag))} <span class="ras-chip-zahl">${mitZeit.filter((p) => p.datum === tag).length}</span>
+      </button>`).join("")}</div>`;
+
+  const ohne = !ohneZeit.length ? "" :
+    `<div class="ras-ohnezeit"><span class="ras-ohnezeit-label">Ohne feste Zeit:</span>${ohneZeit.map((p) =>
+      `<button type="button" data-block="${nr(p)}">${escapeHtml(p.was || (p.mannschaften || []).join(" / ") || "Ohne Bezeichnung")}</button>`
+    ).join("")}</div>`;
+
+  ziel.innerHTML = `
+    <div class="ras-kopfzeile">
+      <h3>Zeitplan</h3>
+      <span class="ras-legende">Antippen springt zum Punkt in der Liste.</span>
+    </div>
+    ${ohne}
+    ${chips}
+    <div class="ras-raster">
+      <div class="ras-zeitspalte"><div class="ras-tagkopf ras-zeitkopf">.</div>${marken}</div>
+      ${spalten.join("")}
+    </div>`;
+}
+
+function renderZeitstrahl(punkte, zustaende) {
   const ziel = document.getElementById("zeitstrahl");
-  const leer = document.getElementById("leer-hinweis");
-
-  if (!punkte.length) {
-    ziel.innerHTML = "";
-    leer.textContent = gewaehlteMannschaft()
-      ? "Für " + gewaehlteMannschaft() + " steht in diesem Ablauf nichts an."
-      : "Für diesen Ablauf sind noch keine Punkte eingetragen.";
-    leer.classList.remove("hidden");
-    return;
-  }
-  leer.classList.add("hidden");
-
-  const heute = heuteIso();
-  const jetzt = jetztMinuten();
-  const naechster = naechsterPunktIndex(punkte, heute, jetzt);
   const mehrtaegig = ablauf.startDatum !== ablauf.endDatum;
 
   let html = "";
@@ -134,19 +227,52 @@ function renderZeitstrahl() {
       html += `<h3 class="tag-ueberschrift">${escapeHtml(datumText(p.datum))}</h3>`;
       letzterTag = p.datum;
     }
-    if (!strichGesetzt && i === naechster && p.datum === heute) {
-      html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(jetzt)}</span></div>`;
+    if (!strichGesetzt && i === zustaende.naechster && p.datum === zustaende.heute) {
+      html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(zustaende.jetzt)}</span></div>`;
       strichGesetzt = true;
     }
-    html += punktHtml(p, {
-      klassen: i < naechster ? "ist-vorbei" : "",
-      laeuft: punktLaeuft(p, heute, jetzt)
-    });
+    html += punktHtml(p, zustaende.map.get(p) || {});
   });
-  if (!strichGesetzt && naechster >= punkte.length && punkte.some((p) => p.datum === heute)) {
-    html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(jetzt)}</span></div>`;
+  if (!strichGesetzt && zustaende.naechster >= punkte.length && punkte.some((p) => p.datum === zustaende.heute)) {
+    html += `<div class="jetzt-strich"><span>jetzt ${zeitAusMinuten(zustaende.jetzt)}</span></div>`;
   }
   ziel.innerHTML = html;
+}
+
+// Raster und Liste zusammen — beide bekommen dieselben Punkte und denselben
+// Zustand, damit sie nie unterschiedlich einfärben.
+function renderPunkte() {
+  const punkte = sichtbarePunkte();
+  const raster = document.getElementById("raster-bereich");
+  const ziel = document.getElementById("zeitstrahl");
+  const leer = document.getElementById("leer-hinweis");
+
+  if (!punkte.length) {
+    raster.innerHTML = "";
+    ziel.innerHTML = "";
+    leer.textContent = gewaehlteMannschaft()
+      ? "Für " + gewaehlteMannschaft() + " steht in diesem Ablauf nichts an."
+      : "Für diesen Ablauf sind noch keine Punkte eingetragen.";
+    leer.classList.remove("hidden");
+    return;
+  }
+  leer.classList.add("hidden");
+
+  const zustaende = punktZustaende(punkte);
+  renderRaster(punkte, zustaende);
+  renderZeitstrahl(punkte, zustaende);
+}
+
+// Klick auf einen Block: die Zeile in der Liste hervorheben und dorthin
+// scrollen. Auf dieser Seite gibt es nichts zu ändern — der Sprung ist alles,
+// was ein Block tut.
+function springeZuPunkt(nr) {
+  const zeile = document.querySelector('.punkt-zeile[data-punkt="' + nr + '"]');
+  if (!zeile) return;
+  document.querySelectorAll(".punkt-zeile.hervorgehoben").forEach((el) => el.classList.remove("hervorgehoben"));
+  zeile.classList.add("hervorgehoben");
+  zeile.scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(() => zeile.classList.remove("hervorgehoben"), 2000);
 }
 
 function renderStand() {
@@ -157,7 +283,7 @@ function renderStand() {
 
 function renderAlles() {
   renderKopf();
-  renderZeitstrahl();
+  renderPunkte();
   renderStand();
 }
 
@@ -267,9 +393,17 @@ function start() {
 
   document.getElementById("plan-mannschaft").addEventListener("change", (e) => {
     lsSchreiben(LS_PLAN_MANNSCHAFT, e.target.value);
-    renderZeitstrahl();
+    renderPunkte();
   });
   document.getElementById("btn-plan-drucken").addEventListener("click", drucken);
+
+  // Raster: Tageswahl am Handy und Sprung von einem Block in die Liste.
+  document.getElementById("raster-bereich").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-tagchip]");
+    if (chip) { aktiverRasterTag = chip.dataset.tagchip; renderPunkte(); return; }
+    const block = e.target.closest("[data-block]");
+    if (block) springeZuPunkt(block.dataset.block);
+  });
 
   laden(true);
 
