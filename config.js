@@ -20,6 +20,18 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.5",
+    groups: [
+      {
+        title: "Beim Sitzungsende wird der Bildschirm geräumt",
+        items: [
+          "Lief die Anmeldung ab, während die App offen war, blieb der Ablaufplan im Browser stehen — unsichtbar hinter dem Hinweis, im Seitenquelltext aber weiter lesbar. Jetzt wird alles entfernt: die Seite, die fünf Dialoge daneben und die Druckansicht.",
+          "Der Hinweis erscheint außerdem an jeder Stelle, an der die Anmeldung wegfällt — vorher nur bei einem Teil der Wege."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.4",
     groups: [
       {

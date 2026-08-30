@@ -164,7 +164,54 @@ async function neuLaden() {
   renderAlles();
 }
 
+// ---------- Sitzungsverlust: räumen, nicht nur verstecken ----------
+
+// ⚠️ Verstecken ist nicht Räumen. Fällt die Sitzung weg, WÄHREND die App
+// offen ist, steht bereits alles auf dem Bildschirm. display:none macht das
+// unsichtbar, nicht weg -- Namen, Nummern und ausgefüllte Formularfelder sind
+// im Seitenquelltext weiter lesbar.
+//
+// ⚠️ Über die CONTAINER räumen, nie über eine Id-Liste. Eine Liste veraltet
+// lautlos: wer später ein Feld ergänzt, müsste daran denken, und genau das eine
+// bliebe stehen.
+//
+// ⚠️ Dialoge, Druckbereich und Bild-Lightbox stehen NEBEN der Hülle, nicht
+// darin -- ihr innerHTML erwischt sie nicht. Ein offener Dialog ist dabei der
+// schlimmste Fall: er steht nicht nur gespeichert, sondern SICHTBAR da.
+//
+// Wegwerfen ist gefahrlos: zurück in die App geht es ausschließlich über ein
+// Neuladen der Seite. Wer sich neu anmeldet, bekommt sie ohnehin frisch.
+let bildschirmGeraeumt = false;
+
+// Vor dem ersten Aufbau gibt es nichts zu räumen -- und wer gar nicht angemeldet
+// ist, soll nicht "Sitzung abgelaufen" lesen. Gesetzt wird das erst, wenn die
+// Hülle wirklich sichtbar wird.
+let appLaeuft = false;
+
+function raeumeBildschirm() {
+  bildschirmGeraeumt = true;
+  const huelle = document.getElementById("app-shell");
+  if (huelle) huelle.innerHTML = "";
+  // ⚠️ #header-user steht in vier Apps im Seitenkopf und damit NEBEN der
+  // Hülle -- der Name des Angemeldeten blieb dort nach dem Sitzungsverlust
+  // stehen. Der Rest des Kopfes (Titel, Logo, Zurück-Link) bleibt absichtlich:
+  // ohne ihn stünde man vor einer weißen Seite ohne Weg zurück.
+  document.querySelectorAll(".modal-overlay, .overlay, #print-area, .foto-lightbox, #header-user").forEach((el) => {
+    el.innerHTML = "";
+    el.classList.add("hidden");
+    el.style.display = "none";
+  });
+}
+
+// ⚠️ Gerufen aus db.js -- an der EINEN Stelle, an der die 401 ankommt. Sonst
+// müsste jeder einzelne Fehlerweg daran denken, und einer vergisst es.
+function raeumeBeiSitzungsverlust() {
+  if (!appLaeuft) return;
+  zeigeAbmeldung();
+}
+
 function zeigeAbmeldung() {
+  raeumeBildschirm();
   document.getElementById("app-shell").style.display = "none";
   const cs = document.getElementById("connect-screen");
   cs.style.display = "";
@@ -576,6 +623,7 @@ function renderDetail() {
 }
 
 function renderAlles() {
+  if (bildschirmGeraeumt) return;
   renderListen();
   renderDetail();
 }
@@ -1258,7 +1306,9 @@ function setupListeners() {
 
   // Jetzt-Linie und Jetzt-Strich wandern von allein weiter, solange die Seite
   // offen ist.
-  setInterval(() => { if (offenerAblauf()) renderPunkte(); }, AUTO_REFRESH_MS);
+  // ⚠️ Der Takt läuft nach einem Sitzungsverlust weiter und würde die
+  // eben geleerte Hülle wieder befüllen. Deshalb der Riegel.
+  setInterval(() => { if (!bildschirmGeraeumt && offenerAblauf()) renderPunkte(); }, AUTO_REFRESH_MS);
 }
 
 // ---------- Start ----------
@@ -1279,6 +1329,7 @@ async function init() {
   }
 
   document.getElementById("connect-screen").style.display = "none";
+  appLaeuft = true;
   document.getElementById("app-shell").style.display = "";
   document.getElementById("header-user").textContent = currentUser.vorname
     ? currentUser.vorname + " " + (currentUser.nachname || "")
