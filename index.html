@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>⏱️ Ablaufplan</title>
+<meta name="theme-color" content="#1a56a0" />
+<link rel="stylesheet" href="style.css?v=1.0" />
+</head>
+<body>
+
+  <div class="connect-screen" id="connect-screen">
+    <div class="card">
+      <h2>⏱️ Ablaufplan</h2>
+      <p id="connect-message">Bitte über die Tools-Übersicht anmelden, um die Abläufe zu sehen.</p>
+      <div class="btn-row">
+        <a class="btn" href="https://sc1911heiligenstadt.github.io/ToolsUebersicht/">Zur Tools-Übersicht</a>
+      </div>
+      <p class="muted" id="cloud-error" style="margin-top:14px;"></p>
+    </div>
+  </div>
+
+  <div id="app-shell" style="display:none;">
+    <header>
+      <h1>⏱️ Ablaufplan</h1>
+      <a href="https://sc1911heiligenstadt.github.io/ToolsUebersicht/" class="back-to-dashboard">← Zurück zum Dashboard</a>
+      <div class="header-right">
+        <span class="header-status" id="save-status"></span>
+        <span class="header-user" id="header-user"></span>
+        <img class="header-logo" src="https://sc1911heiligenstadt.github.io/logo.svg" alt="1. SC 1911 Heiligenstadt e.V." />
+      </div>
+    </header>
+
+    <nav>
+      <button data-tab="ablaeufe" class="active">Abläufe</button>
+      <button data-tab="frueher">Früher</button>
+      <div class="nav-right">
+        <button data-tab="info">Info</button>
+      </div>
+    </nav>
+
+    <main>
+
+      <!-- ---------- Abläufe ---------- -->
+      <section class="tab-section active" id="tab-ablaeufe">
+
+        <!-- Übersicht der kommenden Abläufe -->
+        <div id="ansicht-liste">
+          <div class="toolbar">
+            <h2 class="toolbar-titel">Was ansteht</h2>
+            <div class="toolbar-right">
+              <button class="btn small editor-only hidden" id="btn-neuer-ablauf">+ Neuer Ablauf</button>
+            </div>
+          </div>
+          <div id="ablauf-karten"></div>
+          <div class="empty-state hidden" id="ablaeufe-empty">
+            Es steht gerade kein Ablauf an.
+          </div>
+        </div>
+
+        <!-- Ein einzelner Ablauf -->
+        <div id="ansicht-detail" class="hidden">
+          <button class="linkartig" id="btn-zurueck-liste">← Alle Abläufe</button>
+
+          <div class="card" id="detail-kopf"></div>
+
+          <div class="card" id="anhang-karte">
+            <h2>Anhänge</h2>
+            <p class="muted" style="margin-bottom:10px;">Nur für angemeldete Nutzer. Über den Link ohne Anmeldung sind Anhänge nicht abrufbar.</p>
+            <div id="anhang-liste"></div>
+            <div class="btn-row editor-only hidden" style="justify-content:flex-start;margin-top:10px;">
+              <button class="btn small secondary" id="btn-anhang-waehlen">Datei anhängen…</button>
+              <input type="file" id="anhang-input" class="hidden" multiple />
+            </div>
+          </div>
+
+          <div class="werkzeuge">
+            <label class="schalter">
+              <input type="checkbox" id="nur-meine" />
+              <span id="nur-meine-text">nur meine</span>
+            </label>
+            <select id="meine-mannschaft" class="mannschaft-wahl" aria-label="Meine Mannschaft"></select>
+            <div class="werkzeuge-rechts">
+              <button class="btn small secondary" id="btn-drucken">🖨 Drucken</button>
+              <button class="btn small secondary editor-only hidden" id="btn-link">🔗 Link</button>
+              <button class="btn small editor-only hidden" id="btn-text-einfuegen">📋 Liste einfügen</button>
+              <button class="btn small editor-only hidden" id="btn-neuer-punkt">+ Punkt</button>
+            </div>
+          </div>
+
+          <div id="raster-bereich"></div>
+          <div id="zeitstrahl"></div>
+          <div class="empty-state hidden" id="punkte-empty">
+            Für diesen Ablauf sind noch keine Punkte erfasst.
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ---------- Früher ---------- -->
+      <section class="tab-section" id="tab-frueher">
+        <div class="toolbar">
+          <h2 class="toolbar-titel">Vergangene Abläufe</h2>
+        </div>
+        <p class="muted" style="margin-bottom:14px;">Bleiben stehen, es wird nichts von allein gelöscht. Mit „Kopieren“ wird daraus die Vorlage für das nächste Mal.</p>
+        <div id="frueher-karten"></div>
+        <div class="empty-state hidden" id="frueher-empty">Hier ist noch nichts vorbei.</div>
+      </section>
+
+      <!-- ---------- Info ---------- -->
+      <section class="tab-section" id="tab-info">
+        <div class="card">
+          <h2>Über den Ablaufplan <span class="version-badge" id="version-badge"></span></h2>
+          <p class="muted">
+            Getaktete Tage des Vereins: wer wann wo was macht — und ob es einen selbst betrifft.
+            Ein Ablauf besteht aus Punkten mit Uhrzeit, beteiligten Mannschaften, Ort und einer Notiz
+            zum Mitbringen; die Ansicht ist ein Zeitstrahl mit einer Marke, wo gerade „jetzt“ ist.
+            Wer angemeldet ist, sieht die eigenen Punkte farbig und kann alles andere ausblenden.
+            Eine fertige Liste lässt sich einfügen, statt jeden Punkt zu tippen, und verrutscht es am
+            Tag, schiebt ein Knopf alles ab einer Stelle um ein paar Minuten. Zum Weitergeben gibt es
+            einen Link, der ohne Anmeldung funktioniert.
+          </p>
+          <div class="form-grid" id="meta-view"></div>
+          <p class="muted" id="info-user" style="margin-top:10px;"></p>
+        </div>
+        <div class="card">
+          <h2>Änderungen</h2>
+          <div id="changelog-list"></div>
+        </div>
+        <div class="card" id="ds-info-karte">
+          <h2>Datenschutz</h2>
+          <p>Dieses Werkzeug gehört zu den internen Anwendungen des
+          1. SC 1911 Heiligenstadt. Die hier erfassten Daten werden
+          ausschließlich für die Vereinsarbeit verwendet und liegen auf Servern
+          in Deutschland, die ein Auftragsverarbeiter für den Verein betreibt.
+          Eine Weitergabe an Dritte findet nur statt, soweit sie für den
+          jeweiligen Zweck erforderlich oder gesetzlich vorgeschrieben ist.</p>
+          <p><strong>Zum Link ohne Anmeldung:</strong> Wer einen Ablauf über einen
+          solchen Link weitergibt, macht Titel, Zeitraum, Ort, Infotext sowie alle
+          Punkte mit Uhrzeit, Mannschaft, Ort und Notiz für jeden lesbar, der den
+          Link bekommt. Namen von Personen werden dabei nicht übertragen, Anhänge
+          nicht ausgeliefert. Es sollten deshalb keine personenbezogenen Angaben in
+          den Infotext oder in eine Notiz geschrieben werden. Ein Link lässt sich
+          jederzeit zurückziehen.</p>
+          <p>Verantwortlich ist der 1. SC 1911 Heiligenstadt, Leineberg 2,
+          37308 Heilbad Heiligenstadt, Telefon 03606 612206,
+          <a href="mailto:info@sc1911-heiligenstadt.de">info@sc1911-heiligenstadt.de</a>.
+          Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
+          Datenübertragbarkeit und Widerspruch lassen sich unter dieser
+          Anschrift geltend machen. Beschwerden nimmt der Thüringer
+          Landesbeauftragte für den Datenschutz und die Informationsfreiheit
+          entgegen.</p>
+          <p><a href="https://www.sc1911-heiligenstadt.de/datenschutz/" target="_blank" rel="noopener">Datenschutzerklärung des Vereins</a>
+          &middot;
+          <a href="https://www.sc1911-heiligenstadt.de/impressum-2/" target="_blank" rel="noopener">Impressum</a></p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ---------- Druckbereich ---------- -->
+  <div id="print-area"><div id="print-content"></div></div>
+
+  <!-- ---------- Ablauf-Formular (Kopf) ---------- -->
+  <div class="modal-overlay hidden" id="ablauf-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="ablauf-modal-title">Neuer Ablauf</h2>
+        <button class="modal-close" id="ablauf-modal-close" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="ablauf-form" onsubmit="return false;">
+          <div class="form-grid">
+            <div class="form-field wide"><label for="af-titel">Titel *</label><input type="text" id="af-titel" placeholder="z. B. Medientag" /></div>
+            <div class="form-field"><label for="af-start">Von *</label><input type="date" id="af-start" /></div>
+            <div class="form-field"><label for="af-ende">Bis</label><input type="date" id="af-ende" /></div>
+            <div class="form-field wide"><label for="af-ort">Ort</label><input type="text" id="af-ort" placeholder="z. B. Sportplatz Leineaue" /></div>
+            <div class="form-field wide">
+              <label for="af-info">Infotext</label>
+              <textarea id="af-info" rows="3" placeholder="z. B. Bei Regen in die Halle. Bitte pünktlich sein."></textarea>
+              <p class="feld-hinweis">Steht auch im Link ohne Anmeldung. Keine Namen oder Telefonnummern hineinschreiben.</p>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn danger hidden" id="btn-ablauf-loeschen">Löschen</button>
+        <div class="btn-row">
+          <button class="btn secondary" id="btn-ablauf-abbrechen">Abbrechen</button>
+          <button class="btn success" id="btn-ablauf-speichern">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Punkt-Formular ---------- -->
+  <div class="modal-overlay hidden" id="punkt-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="punkt-modal-title">Neuer Punkt</h2>
+        <button class="modal-close" id="punkt-modal-close" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="punkt-form" onsubmit="return false;">
+          <div class="form-grid">
+            <div class="form-field"><label for="pf-datum">Tag *</label><input type="date" id="pf-datum" /></div>
+            <div class="form-field"><label for="pf-start">Von *</label><input type="time" id="pf-start" /></div>
+            <div class="form-field"><label for="pf-ende">Bis</label><input type="time" id="pf-ende" /></div>
+            <div class="form-field wide"><label for="pf-was">Was steht an</label><input type="text" id="pf-was" placeholder="z. B. Einzelfotos" /></div>
+            <div class="form-field wide">
+              <label>Mannschaften</label>
+              <div id="pf-mannschaften" class="checkbox-list"></div>
+              <p class="feld-hinweis" id="pf-mannschaften-leer">Es sind noch keine Mannschaften angelegt. Sie werden in der Tools-Übersicht unter Einstellungen → Mannschaften gepflegt; wer keine anlegen darf, trägt die Beteiligten unten frei ein.</p>
+            </div>
+            <div class="form-field wide"><label for="pf-werfrei">Wer sonst noch</label><input type="text" id="pf-werfrei" placeholder="z. B. Fotograf, Zeugwart" /></div>
+            <div class="form-field wide"><label for="pf-ort">Ort</label><input type="text" id="pf-ort" placeholder="z. B. Kabine 2" /></div>
+            <div class="form-field wide">
+              <label for="pf-notiz">Notiz / Mitbringen</label>
+              <textarea id="pf-notiz" rows="2" placeholder="z. B. Heimtrikot anziehen"></textarea>
+              <p class="feld-hinweis">Steht auch im Link ohne Anmeldung.</p>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn danger hidden" id="btn-punkt-loeschen">Löschen</button>
+        <div class="btn-row">
+          <button class="btn secondary" id="btn-punkt-abbrechen">Abbrechen</button>
+          <button class="btn success" id="btn-punkt-speichern">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Liste einfügen ---------- -->
+  <div class="modal-overlay hidden" id="text-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Liste einfügen</h2>
+        <button class="modal-close" id="text-modal-close" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted" style="margin-bottom:12px;">Eine Zeile je Punkt, zum Beispiel <code>09:00 B1 Einzelfotos</code>. Erkannt werden auch <code>9.00</code>, <code>9 Uhr</code> und Spannen wie <code>09:00-09:30</code>. Eine Zeile, die nur ein Datum enthält, schaltet die folgenden Punkte auf diesen Tag um.</p>
+        <div class="form-grid">
+          <div class="form-field"><label for="tf-datum">Tag für die Punkte *</label><input type="date" id="tf-datum" /></div>
+        </div>
+        <div class="form-field wide">
+          <label for="tf-text">Liste</label>
+          <textarea id="tf-text" rows="9" placeholder="09:00 B1 Einzelfotos&#10;09:30 B1/B2 Mannschaftsfotos&#10;09:45 B2 Mannschaftsfoto"></textarea>
+        </div>
+        <div id="tf-vorschau"></div>
+      </div>
+      <div class="modal-footer">
+        <div></div>
+        <div class="btn-row">
+          <button class="btn secondary" id="btn-text-abbrechen">Abbrechen</button>
+          <button class="btn success" id="btn-text-uebernehmen">Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Verschieben ---------- -->
+  <div class="modal-overlay hidden" id="verschiebe-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Ab hier verschieben</h2>
+        <button class="modal-close" id="verschiebe-modal-close" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted" id="verschiebe-context" style="margin-bottom:14px;"></p>
+        <div class="schritt-reihe" id="verschiebe-schritte"></div>
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="form-field"><label for="vf-minuten">Minuten (minus = früher)</label><input type="number" id="vf-minuten" step="5" value="15" /></div>
+        </div>
+        <div id="verschiebe-vorschau"></div>
+      </div>
+      <div class="modal-footer">
+        <div></div>
+        <div class="btn-row">
+          <button class="btn secondary" id="btn-verschiebe-abbrechen">Abbrechen</button>
+          <button class="btn success" id="btn-verschiebe-ok">Verschieben</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Link ohne Anmeldung ---------- -->
+  <div class="modal-overlay hidden" id="link-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Link ohne Anmeldung</h2>
+        <button class="modal-close" id="link-modal-close" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted" style="margin-bottom:14px;">Zum Weiterschicken an Eltern und Spieler. Wer den Link hat, sieht diesen Ablauf ohne Anmeldung — Namen und Anhänge werden nicht mit übertragen.</p>
+        <div class="form-grid">
+          <div class="form-field wide">
+            <label for="lf-mannschaft">Für welche Mannschaft</label>
+            <select id="lf-mannschaft"></select>
+          </div>
+          <div class="form-field wide">
+            <label for="lf-url">Link</label>
+            <input type="text" id="lf-url" readonly />
+          </div>
+        </div>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button class="btn small" id="btn-link-kopieren">Link kopieren</button>
+          <button class="btn small secondary" id="btn-link-oeffnen">Öffnen</button>
+        </div>
+        <p class="muted" id="lf-status" style="margin-top:10px;"></p>
+        <hr class="trenner" />
+        <p class="muted">Ein zurückgezogener Link funktioniert sofort nicht mehr. Der Ablauf selbst bleibt erhalten; ein neuer Link lässt sich danach jederzeit erzeugen.</p>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button class="btn small danger" id="btn-link-widerrufen">Link zurückziehen</button>
+          <button class="btn small secondary hidden" id="btn-link-neu">Neuen Link erzeugen</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div></div>
+        <div class="btn-row">
+          <button class="btn secondary" id="btn-link-schliessen">Schließen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js?v=1.0"></script>
+  <script src="zeitlogik.js?v=1.0"></script>
+  <script src="db.js?v=1.0"></script>
+  <script src="app.js?v=1.0"></script>
+</body>
+</html>

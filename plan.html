@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ablaufplan – 1. SC 1911 Heiligenstadt</title>
+<meta name="theme-color" content="#1a56a0" />
+<!-- ⚠️ Diese Seite trägt einen Zufallsschlüssel in der Adresse. Sie gehört in
+     keinen Suchindex und in keine Vorschau. -->
+<meta name="robots" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+<link rel="stylesheet" href="style.css?v=1.0" />
+<link rel="stylesheet" href="plan.css?v=1.0" />
+</head>
+<body class="plan-seite">
+
+  <header>
+    <h1>⏱️ Ablaufplan</h1>
+    <div class="header-right">
+      <img class="header-logo" src="https://sc1911heiligenstadt.github.io/logo.svg" alt="1. SC 1911 Heiligenstadt e.V." />
+    </div>
+  </header>
+
+  <main>
+
+    <div class="card" id="lade-karte">
+      <p class="muted">Der Ablauf wird geladen…</p>
+    </div>
+
+    <div class="card hidden" id="fehler-karte">
+      <h2 id="fehler-titel">Der Link funktioniert nicht</h2>
+      <p id="fehler-text" class="muted"></p>
+      <p class="muted" style="margin-top:10px;">Bitte beim Verein oder beim Trainer nach einem aktuellen Link fragen.</p>
+    </div>
+
+    <div id="inhalt" class="hidden">
+      <div class="card" id="kopf"></div>
+
+      <div class="werkzeuge">
+        <label class="schalter" for="plan-mannschaft">Ich gehöre zu</label>
+        <select id="plan-mannschaft" class="mannschaft-wahl" aria-label="Meine Mannschaft"></select>
+        <div class="werkzeuge-rechts">
+          <button class="btn small secondary" id="btn-plan-drucken">🖨 Drucken</button>
+        </div>
+      </div>
+
+      <div id="raster-bereich"></div>
+      <div id="zeitstrahl"></div>
+      <div class="empty-state hidden" id="leer-hinweis"></div>
+
+      <p class="muted auto-hinweis">Diese Seite lädt sich etwa jede Minute selbst nach — verschobene Zeiten erscheinen von allein. <span id="stand-zeile"></span></p>
+
+      <div class="card" id="ds-karte">
+        <h2>Datenschutz</h2>
+        <p>Diese Seite zeigt einen Ablaufplan des 1. SC 1911 Heiligenstadt. Sie ist
+        über einen zufälligen Schlüssel in der Adresse erreichbar und wird nicht
+        in Suchmaschinen gelistet. Es werden keine Namen von Personen übertragen,
+        keine Anhänge ausgeliefert und keine Konten angezeigt.</p>
+        <p>Beim Aufruf verarbeitet der beauftragte Dienstleister technisch
+        notwendige Verbindungsdaten (unter anderem die IP-Adresse), um die Seite
+        auszuliefern und Missbrauch zu bremsen. Die gewählte Mannschaft wird nur
+        im eigenen Gerät gespeichert und nicht übertragen. Es werden keine
+        Werbe- oder Analysedienste eingebunden.</p>
+        <p>Verantwortlich ist der 1. SC 1911 Heiligenstadt, Leineberg 2,
+        37308 Heilbad Heiligenstadt, Telefon 03606 612206,
+        <a href="mailto:info@sc1911-heiligenstadt.de">info@sc1911-heiligenstadt.de</a>.
+        Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
+        Datenübertragbarkeit und Widerspruch lassen sich unter dieser Anschrift
+        geltend machen. Beschwerden nimmt der Thüringer Landesbeauftragte für den
+        Datenschutz und die Informationsfreiheit entgegen.</p>
+        <p><a href="https://www.sc1911-heiligenstadt.de/datenschutz/" target="_blank" rel="noopener">Datenschutzerklärung des Vereins</a>
+        &middot;
+        <a href="https://www.sc1911-heiligenstadt.de/impressum-2/" target="_blank" rel="noopener">Impressum</a></p>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="print-area"><div id="print-content"></div></div>
+
+  <script src="zeitlogik.js?v=1.0"></script>
+  <script src="db-plan.js?v=1.0"></script>
+  <script src="plan.js?v=1.0"></script>
+</body>
+</html>
