@@ -20,86 +20,44 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
-    version: "1.6",
+    version: "1.0",
     groups: [
       {
-        title: "Der Reiter „Info“ erklärt jetzt, was die App wirklich tut",
+        title: "Ablaufplan",
         items: [
-          "Dort stand bisher ein einzelner Satz. Jetzt steht da, wofür die einzelnen Reiter da sind, was die App mit den Eingaben macht und wo etwas anderes hingehört.",
-          "Am Funktionsumfang ändert sich nichts — nur an der Beschreibung."
+          "Getaktete Tage des Vereins an einer Stelle: Medientag, Turniertag, Trainingslager, Feriencamp.",
+          "Ein Ablauf hat einen Kopf (Titel, Zeitraum, Ort, Infotext) und darunter beliebig viele Punkte.",
+          "Jeder Punkt trägt Uhrzeit, optionale Endzeit, die beteiligten Mannschaften, was ansteht, den Ort und eine Notiz zum Mitbringen.",
+          "Ein Ablauf darf über mehrere Tage gehen; die Punkte sind dann nach Tagen gruppiert."
         ]
-      }
-    ]
-  },
-  {
-    version: "1.5",
-    groups: [
+      },
       {
-        title: "Beim Sitzungsende wird der Bildschirm geräumt",
+        title: "Der Tag als Kalender und als Liste",
         items: [
-          "Lief die Anmeldung ab, während die App offen war, blieb der Ablaufplan im Browser stehen — unsichtbar hinter dem Hinweis, im Seitenquelltext aber weiter lesbar. Jetzt wird alles entfernt: die Seite, die fünf Dialoge daneben und die Druckansicht.",
-          "Der Hinweis erscheint außerdem an jeder Stelle, an der die Anmeldung wegfällt — vorher nur bei einem Teil der Wege."
-        ]
-      }
-    ]
-  },
-  {
-    version: "1.4",
-    groups: [
-      {
-        title: "Am Handy",
-        items: [
-          "Bisher brach die Reiterleiste selbst um, die rechte Reiter-Gruppe darin aber nicht: Sie rutschte als ein Stück in die zweite Zeile und lief dort weiter über den rechten Rand hinaus. Jetzt bricht auch sie um, sobald sie zu breit wird. Zu sehen ist das nur, wenn genug Reiter nebeneinanderstehen — bis dahin sieht alles aus wie bisher."
-        ]
-      }
-    ]
-  },
-  {
-    version: "1.3",
-    groups: [
-      {
-        title: "Der Tag steht jetzt als Kalender da",
-        items: [
-          "Über der Liste liegt neu ein Zeitraster: links die Uhrzeiten, rechts je Tag eine Spalte. Jeder Punkt ist ein Kästchen, dessen Höhe seiner Dauer entspricht — ein Blick genügt, um zu sehen, wo Luft ist und wo es eng wird.",
+          "Über der Liste liegt ein Zeitraster: links die Uhrzeiten, rechts je Tag eine Spalte. Jeder Punkt ist ein Kästchen, dessen Höhe seiner Dauer entspricht — ein Blick genügt, um zu sehen, wo Luft ist und wo es eng wird.",
           "Punkte, die gleichzeitig laufen, stehen nebeneinander statt hintereinander. Am Medientag sieht man so auf einen Blick, dass Einzel- und Mannschaftsfotos parallel gehen.",
           "Eine rote Linie zeigt am laufenden Tag, wo gerade „jetzt“ ist. Was gelaufen ist, tritt zurück; was gerade läuft, ist umrandet.",
-          "Die gewohnte Liste bleibt darunter stehen — mit allen Angaben, Trainernamen und Knöpfen. Ein Tipp auf ein Kästchen springt zur passenden Zeile.",
+          "Darunter steht die gewohnte Liste mit allen Angaben, Trainernamen und Knöpfen. Ein Tipp auf ein Kästchen springt zur passenden Zeile.",
           "Bei einem Ablauf über mehrere Tage stehen die Tage am Rechner nebeneinander. Am Handy wählt man den Tag über die Knöpfe darüber.",
           "Ein Punkt ohne Uhrzeit hat keine Stelle im Raster — er steht als Kästchen darüber, statt zu verschwinden."
         ]
       },
       {
-        title: "Nebenbei behoben",
+        title: "Betrifft mich das?",
         items: [
-          "Enthielt ein Ablauf einen Punkt ohne Uhrzeit, galt für die App der ganze Tag als „steht noch bevor“ — auch am Abend war nichts als erledigt markiert. Jetzt wird für jeden Punkt einzeln nach seiner eigenen Zeit entschieden."
+          "Die eigenen Mannschaften kommen aus dem eigenen Profil in den Trainerdaten. Punkte, die eine davon betreffen, sind farbig markiert.",
+          "Ein Schalter blendet alles andere aus. Die volle Liste ist immer einen Klick entfernt.",
+          "Wer über den Link ohne Anmeldung kommt, wählt seine Mannschaft oben selbst — das Gerät merkt sich die Wahl."
         ]
-      }
-    ]
-  },
-  {
-    version: "1.2",
-    groups: [
+      },
       {
-        title: "Die Mannschaftsliste ist aufgeräumt",
+        title: "Trainer und Mannschaften",
         items: [
-          "In der Ankreuzliste stand bisher alles durcheinander, was Trainer irgendwann in ihr Profil getippt hatten — „B1“ neben „B-Junioren“ neben „B-Junioren 2 (K)“, dazu Sachen wie „Zeugwart“ oder „U6-U11“, die gar keine Mannschaft sind.",
-          "Jetzt kommen die Mannschaften aus einer einzigen Liste, die in der Tools-Übersicht unter Einstellungen → Mannschaften gepflegt wird. Jede Mannschaft steht dort genau einmal.",
-          "Die Reihenfolge ist die sinnvolle: Herren zuerst, dann A- bis G-Junioren, dann die Nummer. Nicht mehr alphabetisch, wo E1 vor D1 stand.",
-          "Die Trainernamen unter den Punkten kommen jetzt aus derselben Liste — dort ist hinterlegt, wer welche Mannschaft betreut, samt Rolle.",
-          "Alte Schreibweisen in bereits erfassten Punkten bleiben stehen und sind als „alte Schreibweise“ gekennzeichnet. Bei einem neuen Punkt lassen sie sich nicht mehr auswählen."
-        ]
-      }
-    ]
-  },
-  {
-    version: "1.1",
-    groups: [
-      {
-        title: "Die Trainer stehen jetzt an den Punkten",
-        items: [
-          "Unter den Mannschaften eines Punktes stehen die Namen der Trainer, die diese Mannschaft in ihrem Profil führen.",
-          "Betreut jemand zwei der beteiligten Mannschaften, steht der Name trotzdem nur einmal da.",
-          "Die Namen kommen aus den Trainerdaten und werden hier nicht gespeichert. Über den Link ohne Anmeldung sind sie nicht sichtbar."
+          "Unter den Mannschaften eines Punktes stehen die Namen der Trainer, die diese Mannschaft betreuen. Wer zwei der beteiligten Mannschaften führt, steht trotzdem nur einmal da.",
+          "Die Namen kommen aus den Trainerdaten und werden hier nicht gespeichert. Über den Link ohne Anmeldung sind sie nicht sichtbar.",
+          "Die Ankreuzliste der Mannschaften kommt aus der zentralen Liste, die in der Tools-Übersicht unter Einstellungen → Mannschaften gepflegt wird. Jede Mannschaft steht dort genau einmal.",
+          "Die Reihenfolge ist die sinnvolle: Herren zuerst, dann A- bis G-Junioren, dann die Nummer.",
+          "Schreibweisen aus früher erfassten Punkten bleiben stehen und sind als „alte Schreibweise“ gekennzeichnet; bei einem neuen Punkt lassen sie sich nicht mehr auswählen."
         ]
       },
       {
@@ -109,29 +67,6 @@ const APP_CHANGELOG = [
           "Die Nachricht geht nur an Vereinskonten mit angemeldetem Gerät. Ein- und ausschalten lässt sie sich in der Tools-Übersicht unter „Mein Konto“.",
           "Ein Punkt wird höchstens einmal gemeldet. Wird er verschoben, kommt zur neuen Zeit eine neue Erinnerung.",
           "Punkte ohne Mannschaft (etwa „Fotograf“) lösen nichts aus — dahinter steht kein Konto."
-        ]
-      }
-    ]
-  },
-  {
-    version: "1.0",
-    groups: [
-      {
-        title: "Ablaufplan",
-        items: [
-          "Getaktete Tage des Vereins an einer Stelle: Medientag, Turniertag, Trainingslager, Feriencamp.",
-          "Ein Ablauf hat einen Kopf (Titel, Zeitraum, Ort, Infotext) und darunter beliebig viele Punkte.",
-          "Jeder Punkt trägt Uhrzeit, optionale Endzeit, die beteiligten Mannschaften, was ansteht, den Ort und eine Notiz zum Mitbringen.",
-          "Ein Ablauf darf über mehrere Tage gehen; die Punkte sind dann nach Tagen gruppiert.",
-          "Die Ansicht ist ein Zeitstrahl: Uhrzeit links, Karte rechts. Am laufenden Tag zeigt ein Strich, wo gerade „jetzt“ ist; Vergangenes tritt zurück."
-        ]
-      },
-      {
-        title: "Betrifft mich das?",
-        items: [
-          "Die eigenen Mannschaften kommen aus dem eigenen Profil in den Trainerdaten. Punkte, die eine davon betreffen, sind farbig markiert.",
-          "Ein Schalter blendet alles andere aus. Die volle Liste ist immer einen Klick entfernt.",
-          "Wer über den Link ohne Anmeldung kommt, wählt seine Mannschaft oben selbst — das Gerät merkt sich die Wahl."
         ]
       },
       {
@@ -162,15 +97,10 @@ const APP_CHANGELOG = [
         ]
       },
       {
-        title: "Ausdruck",
+        title: "Ausdruck und Anhänge",
         items: [
           "Der Knopf „Drucken“ legt den Ablauf als Tabelle aufs Blatt — ohne Menü und Knöpfe, zum Aushängen an der Kabine.",
-          "Ist der Schalter „nur meine“ aktiv, druckt die App genau diese Auswahl."
-        ]
-      },
-      {
-        title: "Anhänge",
-        items: [
+          "Ist der Schalter „nur meine“ aktiv, druckt die App genau diese Auswahl.",
           "An einen Ablauf lassen sich Dateien hängen, etwa ein Lageplan oder ein Infoblatt.",
           "Anhänge sind nur für angemeldete Nutzer sichtbar — über den Link ohne Anmeldung nicht."
         ]
@@ -179,7 +109,8 @@ const APP_CHANGELOG = [
         title: "Danach",
         items: [
           "Ist der letzte Tag vorbei, wandert ein Ablauf in den Reiter „Früher“. Gelöscht wird nichts von allein.",
-          "Ein Knopf kopiert einen Ablauf samt allen Punkten — der Medientag im nächsten Jahr braucht dann nur neue Daten."
+          "Ein Knopf kopiert einen Ablauf samt allen Punkten — der Medientag im nächsten Jahr braucht dann nur neue Daten.",
+          "Die Kopie bekommt weder den Link noch die Anhänge des Originals."
         ]
       },
       {
@@ -187,11 +118,12 @@ const APP_CHANGELOG = [
         items: [
           "Sehen: alle Abläufe mit allen Punkten, den eigenen Filter und den Ausdruck.",
           "Bearbeiten: Abläufe und Punkte anlegen, ändern, verschieben, löschen, Links erzeugen und zurückziehen, Anhänge pflegen.",
-          "Der Reiter „Info“ ist für alle sichtbar."
+          "Der Reiter „Info“ ist für alle sichtbar.",
+          "Fällt die Anmeldung weg, während die App offen ist, räumt sie den Bildschirm: Seite, Dialoge und Druckansicht verschwinden, statt im Hintergrund lesbar zu bleiben."
         ]
       },
       {
-        title: "Daten & Speicherung",
+        title: "Daten und Speicherung",
         items: [
           "Gespeichert wird in der Vereins-Nextcloud über die zentrale Anmeldung der Tools-Übersicht — ein eigenes Passwort braucht es nicht.",
           "Ändern zwei Geräte gleichzeitig denselben Stand, erkennt die App das, lädt den fremden Stand nach und sagt Bescheid."
