@@ -20,6 +20,18 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.2",
+    groups: [
+      {
+        title: "Liste einfügen: „9 Uhr“ wird jetzt wirklich erkannt",
+        items: [
+          "Der Hilfetext im Einfügen-Dialog nennt „9 Uhr“ als erlaubte Schreibweise — die App wies solche Zeilen aber als „keine Uhrzeit erkannt“ ab. Jetzt versteht sie die volle Stunde ohne Minuten, auch als Spanne („9-10 Uhr“, „9 bis 10 Uhr“).",
+          "Ohne das Wort „Uhr“ bleibt eine Zahl am Zeilenanfang weiterhin keine Uhrzeit — sonst würde aus „16 B1 Einzelfotos“ die Uhrzeit 16:00 und die Mannschaft ginge verloren."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.1",
     groups: [
       {

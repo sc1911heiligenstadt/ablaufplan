@@ -265,19 +265,35 @@ function parseDatumZeile(zeile, jahrFallback) {
   return datumAusIso(iso) ? iso : null;
 }
 
-// Sucht die Uhrzeit am Zeilenanfang. Erlaubt 9:00, 09:00, 9.00 und einen
-// Bereich 09:00-09:30 (auch mit Gedankenstrich oder "bis").
+// Sucht die Uhrzeit am Zeilenanfang. Erlaubt 9:00, 09:00, 9.00, die volle
+// Stunde als "9 Uhr" und einen Bereich 09:00-09:30 bzw. 9-10 Uhr (auch mit
+// Gedankenstrich oder "bis").
 // Liefert { startZeit, endZeit, rest } oder null.
+//
+// ⚠️ Ohne Minuten ist das Wort "Uhr" PFLICHT. Sonst würde die Zeile
+// "16 B1 Einzelfotos" zu 16:00 — die Mannschaft wäre die Uhrzeit.
 function parseZeitAnfang(zeile) {
   const re = /^(\d{1,2})[:.](\d{2})(?:\s*(?:-|–|—|bis)\s*(\d{1,2})[:.](\d{2}))?\s*(?:uhr\b)?\s*/i;
-  const m = re.exec(zeile);
-  if (!m) return null;
-  const start = minutenAusZeit(m[1] + ":" + m[2]);
-  if (start === null) return null;
+  const reUhr = /^(\d{1,2})(?:\s*(?:-|–|—|bis)\s*(\d{1,2}))?\s*uhr\b\s*/i;
+  let start = null;
   let ende = null;
-  if (m[3]) {
-    ende = minutenAusZeit(m[3] + ":" + m[4]);
-    if (ende === null) return null;
+  let m = re.exec(zeile);
+  if (m) {
+    start = minutenAusZeit(m[1] + ":" + m[2]);
+    if (start === null) return null;
+    if (m[3]) {
+      ende = minutenAusZeit(m[3] + ":" + m[4]);
+      if (ende === null) return null;
+    }
+  } else {
+    m = reUhr.exec(zeile);
+    if (!m) return null;
+    start = minutenAusZeit(m[1] + ":00");
+    if (start === null) return null;
+    if (m[2]) {
+      ende = minutenAusZeit(m[2] + ":00");
+      if (ende === null) return null;
+    }
   }
   return {
     startZeit: zeitAusMinuten(start),
