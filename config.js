@@ -20,6 +20,19 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.3",
+    groups: [
+      {
+        title: "Die Erinnerung erreicht jetzt auch die B1",
+        items: [
+          "Trainer bekommen 15 Minuten vor ihrem Punkt eine Nachricht aufs Handy. Wessen Mannschaft im Profil als „B-Junioren 1“ steht, der Punkt aber als „B1“ ausgewählt war, bekam keine — die beiden Schreibweisen galten als verschiedene Mannschaften. Betroffen war jede Mannschaft, deren Nummer hinter dem Wort „Junioren“ steht.",
+          "Die Nachricht war damit endgültig verbraucht: der Ablauf merkt sich vor dem Verschicken, dass er den Punkt erledigt hat. Nachgeholt wurde nichts, und gemeldet auch nicht.",
+          "Auch die Markierung „betrifft mich“ in der Tagesansicht greift jetzt in denselben Fällen."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.2",
     groups: [
       {

@@ -86,11 +86,21 @@ function datumKurz(iso) {
 // Vergleichsform für Mannschaftsnamen. "D1", "D1-Jugend" und "d 1 Jugend" sind
 // dieselbe Mannschaft — die Namen kommen aus den frei getippten Trainerprofilen
 // und aus einer eingefügten Textliste, die stimmen nie zeichengenau überein.
+// ⚠️ Zeichengleich mit mannschaftNorm in E:\ToolsUebersicht\admin-worker.js —
+// wer eine ändert, zieht die andere mit. Sonst markiert die App einen Punkt als
+// "meinen", während die Erinnerung dazu ausbleibt (oder umgekehrt).
+//
+// Seit 05.09.2026: Klammerzusätze und Schrägstriche fallen weg, und
+// "junioren"/"jugend" wird ÜBERALL abgeschnitten, nicht nur am Ende. Mit dem
+// alten `$` blieb bei "B-Junioren 1" das `bjunioren1` stehen — die Ankreuzliste
+// des Punkt-Dialogs liefert seit dem 12.08.2026 die Kurznamen aus der zentralen
+// Mannschaftsliste ("B1"), im Trainerprofil steht aber weiter der alte Freitext.
 function normMannschaft(name) {
   return String(name || "")
     .toLowerCase()
-    .replace(/[\s._-]+/g, "")
-    .replace(/(jugend|junioren|juniorinnen|mannschaft)$/, "");
+    .replace(/\([^)]*\)/g, "")
+    .replace(/[\s._\-\/]+/g, "")
+    .replace(/(jugend|junioren|juniorinnen|mannschaft)/g, "");
 }
 
 // Betrifft dieser Punkt eine der eigenen Mannschaften?
