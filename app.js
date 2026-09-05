@@ -655,7 +655,6 @@ async function ablaufSpeichern() {
   if (!ende) ende = start;
   if (ende < start) { alert("Das Ende liegt vor dem Anfang."); return; }
 
-  const vorher = JSON.stringify(appData.ablaeufe);
   let ablauf = id ? ablaufById(id) : null;
   if (!ablauf) {
     ablauf = normalisiereAblauf({
@@ -678,7 +677,14 @@ async function ablaufSpeichern() {
     offenerAblaufId = ablauf.id;
     renderAlles();
   } else {
-    appData.ablaeufe = JSON.parse(vorher).map(normalisiereAblauf);
+    // ⚠️ KEIN Rollback auf einen vorher gemerkten Stand. Bei einem 409 hat
+    // speichern() bereits neuLaden() ausgeführt und appData durch den
+    // Fremdstand ersetzt; ein Rollback träfe dieses neue Objekt und würfe die
+    // Änderung des anderen Geräts weg — sichtbar bliebe sie auf dem Schirm,
+    // der nächste Speichern-Klick (den der Dialogtext ausdrücklich anfordert)
+    // schriebe sie weg. Deshalb wie in ablaufLoeschen: eine einzige Quelle für
+    // den Zustand, und die ist der Server.
+    await neuLaden();
   }
 }
 

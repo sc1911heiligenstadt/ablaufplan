@@ -20,6 +20,19 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.4",
+    groups: [
+      {
+        title: "Speicher-Konflikt: der Stand des anderen Geräts bleibt jetzt stehen",
+        items: [
+          "Arbeiten zwei Geräte gleichzeitig am selben Ablauf, meldet die App „Ein anderes Gerät hat inzwischen gespeichert“ und lädt den aktuellen Stand nach. Im Kopf-Dialog (Titel, Zeitraum, Ort, Infotext) hat sie diesen frisch geladenen Stand danach sofort wieder verworfen: auf dem Bildschirm stand er, im Speicher nicht. Der zweite Speichern-Klick — den der Hinweis ausdrücklich verlangt — löschte den Punkt des anderen Geräts dann wieder weg, ohne dass es jemand sah.",
+          "Nach einem misslungenen Speichern gilt jetzt nur noch der Stand vom Server. Am Medientag ist genau das der Fall: Geschäftsstelle am Rechner, jemand anders am Handy.",
+          "Punkte anlegen, ändern, löschen und verschieben waren nicht betroffen — dort blieb der nachgeladene Stand schon vorher erhalten."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.3",
     groups: [
       {
