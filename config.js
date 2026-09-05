@@ -20,6 +20,18 @@ const MAX_DATEI_BYTES = 10 * 1024 * 1024;
 
 const APP_CHANGELOG = [
   {
+    version: "1.1",
+    groups: [
+      {
+        title: "Liste einfügen: Datumszeilen werden wieder erkannt",
+        items: [
+          "Eine Zeile, die nur ein Datum enthält (etwa „16.08.2026“ oder „17.08.“), schaltet die folgenden Punkte jetzt zuverlässig auf diesen Tag um. Vorher las die App bei zweistelligem Tag und Monat eine Uhrzeit daraus („16:08“), legte daraus einen sinnlosen Punkt an und ließ alle folgenden Punkte am Vortag stehen — ohne Hinweis.",
+          "Betroffen war der übliche Weg für mehrtägige Listen aus Trainingslager und Feriencamp."
+        ]
+      }
+    ]
+  },
+  {
     version: "1.0",
     groups: [
       {

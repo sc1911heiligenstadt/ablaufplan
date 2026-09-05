@@ -307,10 +307,17 @@ function parseAblaufText(text, standardDatum, bekannteTeams, neueId) {
     const zeile = putzeZeile(roh);
     if (!zeile) return;
 
+    // ⚠️ Die Datumszeile wird VOR der Uhrzeit geprüft. Das Zeitmuster erlaubt den
+    // Punkt als Trenner ("9.00 Uhr") und frisst damit sonst jede Datumszeile mit
+    // zweistelligem Tag und Monat: "16.08.2026" wurde zu 16:08 mit dem Text
+    // ".2026", der Tageswechsel fiel aus und alle folgenden Punkte blieben am
+    // Vortag — ohne jede Warnung. Umgekehrt kann eine echte Uhrzeit nie als Datum
+    // durchgehen: parseDatumZeile verlangt die ganze Zeile (zwei Punkte, Anker $).
+    const neuesDatum = parseDatumZeile(zeile, jahrFallback);
+    if (neuesDatum) { datum = neuesDatum; return; }
+
     const zeit = parseZeitAnfang(zeile);
     if (!zeit) {
-      const neuesDatum = parseDatumZeile(zeile, jahrFallback);
-      if (neuesDatum) { datum = neuesDatum; return; }
       warnungen.push({ zeile: nr + 1, text: zeile, grund: "keine Uhrzeit erkannt" });
       return;
     }
