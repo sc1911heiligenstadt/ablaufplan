@@ -9,7 +9,7 @@
   --gray: #f4f5f7;
   --border: #dde1e8;
   --text: #1e2330;
-  --muted: #6b7280;
+  --muted: #676e7c;
   --white: #ffffff;
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   --radius: 12px;
@@ -463,7 +463,7 @@ body.printing-report #print-area { display: block; padding: 20px; }
    noch, wenn sie an DIESEM Punkt bereits angehakt sind -- so verliert ein alter
    Punkt beim Bearbeiten seine Angabe nicht, neu vergeben kann sie aber niemand
    mehr. Nach dem Umschreib-Lauf verschwinden sie von selbst. */
-.checkbox-row.alt-mannschaft > span { color: var(--muted, #6b7280); }
+.checkbox-row.alt-mannschaft > span { color: var(--muted, #676e7c); }
 .alt-hinweis {
   font-size: 11px;
   border: 1px solid currentColor;
