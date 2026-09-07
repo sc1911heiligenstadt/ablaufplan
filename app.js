@@ -1142,7 +1142,6 @@ function drucken() {
 // ---------- Info-Tab ----------
 
 function renderInfo() {
-  document.getElementById("version-badge").textContent = "v" + APP_VERSION;
   const anzahl = appData.ablaeufe.length;
   const punkte = appData.ablaeufe.reduce((s, a) => s + a.punkte.length, 0);
   document.getElementById("meta-view").innerHTML = `
@@ -1154,13 +1153,37 @@ function renderInfo() {
     ? "Angemeldet als " + (currentUser.vorname ? currentUser.vorname + " " + (currentUser.nachname || "") : currentUser.username)
       + (canEdit() ? " · darf bearbeiten" : " · darf sehen")
     : "";
-  document.getElementById("changelog-list").innerHTML = APP_CHANGELOG.map((e) => `
+  renderFunktionen();
+  renderChangelog();
+}
+
+// Die Änderungsliste steht seit 07.09.2026 NICHT mehr im Info-Reiter: dort
+// steht nur noch, was die App kann. APP_CHANGELOG bleibt in config.js gepflegt
+// und wird weitergeschrieben — es ist die Quelle für die große Anleitung und
+// für die Neuigkeiten auf der Startseite der Tools-Übersicht. Diese Funktion
+// steigt darum still aus, wenn es das Ziel nicht gibt, statt beim Seitenstart
+// mit einem Fehler abzubrechen.
+function renderChangelog() {
+  const container = document.getElementById("changelog-list");
+  if (!container) return;
+  container.innerHTML = APP_CHANGELOG.map((e) => `
     <div class="changelog-entry">
       <span class="cv">Version ${escapeHtml(e.version)}</span>
       ${e.groups.map((g) => `<div class="changelog-group">
         <span class="cg-title">${escapeHtml(g.title)}</span>
         <ul class="cg-items">${g.items.map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>
       </div>`).join("")}
+    </div>`).join("");
+}
+
+// Der Zustand, nicht die Änderung: was der Ablaufplan kann, nach Themen.
+function renderFunktionen() {
+  const container = document.getElementById("funktionen-list");
+  if (!container) return;
+  container.innerHTML = APP_FUNKTIONEN.map((g) => `
+    <div class="changelog-group">
+      <div class="cg-title">${escapeHtml(g.title)}</div>
+      <ul class="cg-items">${g.items.map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>
     </div>`).join("");
 }
 

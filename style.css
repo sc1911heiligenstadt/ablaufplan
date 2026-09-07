@@ -472,3 +472,7 @@ body.printing-report #print-area { display: block; padding: 20px; }
   margin-left: 4px;
   white-space: nowrap;
 }
+
+/* Karte "Funktionen" im Info-Reiter. Die Schriftgroesse haengt sonst an
+   .changelog-entry — die Klasse hat diese Karte nicht. */
+#funktionen-list { display: flex; flex-direction: column; gap: 18px; font-size: 13px; }
